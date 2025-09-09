@@ -1,0 +1,6 @@
+services:
+  jwt-service:
+    build: .
+    container_name: go_app
+    ports:
+      - "8080:8080"
