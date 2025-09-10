@@ -12,12 +12,13 @@ func (a *APIHandler) Register() http.HandlerFunc {
 
 		login, login_ok := body["login"]
 		password, password_ok := body["password"]
-		_, db_ok := a.users_database[login]
-		if login_ok && password_ok && !db_ok {
-			a.users_database[login] = password
-			w.Write([]byte("User created"))
-		} else {
-			w.Write([]byte("User is already appeares"))
+
+		if login_ok && password_ok {
+			if err := a.dbRepo.CreateUser(login, password); err == nil {
+				w.Write([]byte("User created"))
+				return
+			}
 		}
+		w.Write([]byte("User is already appeares"))
 	}
 }

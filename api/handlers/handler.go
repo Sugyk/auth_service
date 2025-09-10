@@ -1,5 +1,7 @@
 package handlers
 
+import "Sugyk/jwt_golang/db_repository"
+
 type APIHandler struct {
-	users_database map[string]string
+	dbRepo *db_repository.DBRepo
 }

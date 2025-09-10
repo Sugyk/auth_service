@@ -19,7 +19,7 @@ func (a *APIHandler) Login() http.HandlerFunc {
 
 		login, login_ok := body["login"]
 		password, password_ok := body["password"]
-		db_password, db_ok := a.users_database[login]
+		db_password, db_ok := a.dbRepo.GetUser(login)
 		if login_ok && password_ok && db_ok && db_password == password {
 			token := jwt.New(jwt.SigningMethodHS256)
 			claims := token.Claims.(jwt.MapClaims)

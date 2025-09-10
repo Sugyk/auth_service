@@ -1,10 +1,13 @@
 package handlers
 
-import "net/http"
+import (
+	"Sugyk/jwt_golang/db_repository"
+	"net/http"
+)
 
-func Register(mux *http.ServeMux, users_database map[string]string) {
+func Register(mux *http.ServeMux, dbRepo *db_repository.DBRepo) {
 	apiHandler := APIHandler{
-		users_database: users_database,
+		dbRepo: dbRepo,
 	}
 	mux.Handle("/healthz", apiHandler.Health())
 	mux.Handle("/reg", apiHandler.Register())
