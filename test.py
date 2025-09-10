@@ -22,8 +22,13 @@ def test_api():
         print("OK: Login successful")
 
     resp = session.get(URL + "/healthz")
+    coockies = session.cookies.get_dict()
     if resp.status_code != 200:
         print("Health check failed:", resp, resp.text, resp.headers)
+        return
+    elif coockies.get("jwt") is None:
+        print("Health check failed: no jwt coockie")
+        print(resp.request.headers)
         return
     else:
         print("OK: health")
