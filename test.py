@@ -11,16 +11,22 @@ def test_api():
     if resp.status_code != 200:
         print("Registration failed:", resp.text)
         return
-    print("Registration successful", resp.status_code)
+    else:
+        print("OK: Registration")
 
     resp = session.post(URL + "/login", json={'login': USER_LOGIN, 'password': USER_PASSWORD})
     if resp.status_code != 200:
         print('Login failed:', resp.text)
         return
-    print("Login successful", resp.status_code, resp.headers, resp.text)
+    else:
+        print("OK: Login successful")
 
     resp = session.get(URL + "/healthz")
-    print("health", resp.request.headers)
+    if resp.status_code != 200:
+        print("Health check failed:", resp, resp.text, resp.headers)
+        return
+    else:
+        print("OK: health")
 
 
 if __name__ == "__main__":
