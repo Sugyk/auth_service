@@ -34,6 +34,14 @@ func (a *APIHandler) Login() http.HandlerFunc {
 				return
 			}
 
+			jwtErr := a.jwtRepo.SetJWT(login, tokenString)
+
+			if jwtErr != nil {
+				log.Printf("failed to set data, error: %s", err)
+				http.Error(w, "Something went wrong...", http.StatusInternalServerError)
+				return
+			}
+
 			cookie := &http.Cookie{
 				Name:     "jwt",
 				Value:    tokenString,
@@ -46,7 +54,7 @@ func (a *APIHandler) Login() http.HandlerFunc {
 
 			http.SetCookie(w, cookie)
 			w.WriteHeader(http.StatusOK)
-			log.Printf("failed to set data, error: %s", err)
+
 			w.Write([]byte("Login successful"))
 		} else {
 
