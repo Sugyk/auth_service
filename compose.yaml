@@ -4,3 +4,9 @@ services:
     container_name: go_app
     ports:
       - "8080:8080"
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
