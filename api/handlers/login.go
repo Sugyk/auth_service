@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -45,8 +46,10 @@ func (a *APIHandler) Login() http.HandlerFunc {
 
 			http.SetCookie(w, cookie)
 			w.WriteHeader(http.StatusOK)
+			log.Printf("failed to set data, error: %s", err)
 			w.Write([]byte("Login successful"))
 		} else {
+
 			http.Error(w, "Wrong credentials", http.StatusBadRequest)
 		}
 	}
