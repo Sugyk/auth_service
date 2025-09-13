@@ -2,17 +2,14 @@ package handlers
 
 import (
 	"Sugyk/jwt_golang/db_repository"
-	"Sugyk/jwt_golang/jwt_repository"
 )
 
 type APIHandler struct {
-	dbRepo  *db_repository.DBRepo
-	jwtRepo *jwt_repository.JWTRepo
+	dbRepo *db_repository.DBRepo
 }
 
-func NewAPIHandler(dbRepo *db_repository.DBRepo, jwtRepo *jwt_repository.JWTRepo) *APIHandler {
+func NewAPIHandler(dbRepo *db_repository.DBRepo) *APIHandler {
 	return &APIHandler{
-		dbRepo:  dbRepo,
-		jwtRepo: jwtRepo,
+		dbRepo: dbRepo,
 	}
 }
