@@ -7,6 +7,13 @@ USER_PASSWORD = 'test_password'
 
 def test_api():
     session = requests.Session()
+    resp = session.post(URL + "/check_token", json={'login': USER_LOGIN, 'jwt': "some_jwt_token"})
+    if resp.status_code != 401:
+        print("Check token failed: expected 401, got", resp.status_code)
+        return
+    else:
+        print("OK: Check token unauthorized")
+
     resp = session.post(URL + "/reg", json={'login': USER_LOGIN, 'password': USER_PASSWORD})
     if resp.status_code != 200:
         print("Registration failed:", resp.text)
@@ -32,6 +39,12 @@ def test_api():
         return
     else:
         print("OK: health")
+    resp = session.get(URL + "/check_token")
+    if resp.status_code != 200:
+        print("Check token failed:", resp.status_code, resp.text)
+        return
+    else:
+        print("OK: Check token authorized")
 
 
 if __name__ == "__main__":

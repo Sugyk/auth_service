@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"time"
 
@@ -31,14 +30,6 @@ func (a *APIHandler) Login() http.HandlerFunc {
 			tokenString, err := token.SignedString(signingKey)
 			if err != nil {
 				http.Error(w, "Error signing token", http.StatusInternalServerError)
-				return
-			}
-
-			jwtErr := a.jwtRepo.SetJWT(login, tokenString)
-
-			if jwtErr != nil {
-				log.Printf("failed to set data, error: %s", err)
-				http.Error(w, "Something went wrong...", http.StatusInternalServerError)
 				return
 			}
 
