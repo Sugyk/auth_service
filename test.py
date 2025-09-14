@@ -34,9 +34,9 @@ def test_api():
 
     try:
         jwt.decode(jwt_token, "", algorithms=['HS256'])
-        isEmptySecretKey = False
-    except jwt.InvalidTokenError:
         isEmptySecretKey = True
+    except jwt.InvalidTokenError:
+        isEmptySecretKey = False
 
     if resp.status_code != 200:
         print("Health check failed:", resp, resp.text, resp.headers)
