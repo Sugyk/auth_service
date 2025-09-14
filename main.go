@@ -5,11 +5,16 @@ import (
 	"Sugyk/jwt_golang/db_repository"
 	"log"
 	"net/http"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
 	mux := http.NewServeMux()
-
+	err := godotenv.Load(".env")
+	if err != nil {
+		panic(err)
+	}
 	dbRepo := db_repository.NewDBRepo()
 
 	handlers.Register(mux, dbRepo)
