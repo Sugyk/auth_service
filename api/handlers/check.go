@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -12,7 +11,8 @@ func (a *APIHandler) CheckJWT() http.HandlerFunc {
 
 		token, err := parseJWTCookie(r)
 		if err != nil {
-			log.Println("error when parsing token ", err)
+			http.Error(w, "Token is invalid or expired", http.StatusBadRequest)
+			return
 		}
 
 		t, err := jwt.Parse(token, func(token *jwt.Token) (any, error) {
