@@ -9,8 +9,36 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
 )
+
+func runMigrations(db *sql.DB) error {
+	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	if err != nil {
+		return err
+	}
+
+	m, err := migrate.NewWithDatabaseInstance(
+		"file://migrations",
+		"postgres",
+		driver,
+	)
+	if err != nil {
+		return fmt.Errorf("could not create migration instance: %w", err)
+	}
+
+	err = m.Up()
+	if err != nil {
+		return fmt.Errorf("could not up migrates: %w", err)
+	}
+
+	log.Println("Migrations applied successfully")
+	return nil
+}
 
 func main() {
 	mux := http.NewServeMux()
@@ -25,7 +53,7 @@ func main() {
 	)
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("error when opening db connection:", err)
 	}
 	defer db.Close()
 	err = db.Ping()
@@ -33,8 +61,12 @@ func main() {
 		log.Fatal(err)
 	}
 	log.Println("db connection is established")
-	dbRepo := db_repository.NewDBRepo(db)
+	err = runMigrations(db)
+	if err != nil {
+		log.Fatal("migration failed:", err)
+	}
 
+	dbRepo := db_repository.NewDBRepo(db)
 	handlers.Register(mux, dbRepo)
 	server := &http.Server{
 		Addr:    "0.0.0.0:8080",
