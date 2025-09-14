@@ -16,7 +16,7 @@ func (a *APIHandler) CheckJWT() http.HandlerFunc {
 		}
 
 		t, err := jwt.Parse(token, func(token *jwt.Token) (any, error) {
-			return []byte("l9Xf7vQ3s8R2yT1uM6kB4hJ0aW5nZ8pC"), nil
+			return []byte(getSecretKey()), nil
 		})
 
 		if err == nil && t.Valid {

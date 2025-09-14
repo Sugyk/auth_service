@@ -10,7 +10,7 @@ import (
 
 func (a *APIHandler) Login() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		signingKey := []byte("l9Xf7vQ3s8R2yT1uM6kB4hJ0aW5nZ8pC")
+		signingKey := []byte(getSecretKey())
 		body := make(map[string]string)
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
