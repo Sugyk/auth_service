@@ -1,4 +1,5 @@
 import requests
+import jwt
 
 URL = "http://localhost:8080"
 
@@ -7,9 +8,9 @@ USER_PASSWORD = 'test_password'
 
 def test_api():
     session = requests.Session()
-    resp = session.post(URL + "/check_token", json={'login': USER_LOGIN, 'jwt': "some_jwt_token"})
-    if resp.status_code != 401:
-        print("Check token failed: expected 401, got", resp.status_code)
+    resp = session.post(URL + "/check_token", json={'login': USER_LOGIN})
+    if resp.status_code != 400:
+        print("Check token failed: expected 400, got", resp.status_code)
         return
     else:
         print("OK: Check token unauthorized")
@@ -29,13 +30,23 @@ def test_api():
         print("OK: Login successful")
 
     resp = session.get(URL + "/healthz")
-    coockies = session.cookies.get_dict()
+    jwt_token = session.cookies.get('jwt')
+
+    try:
+        jwt.decode(jwt_token, "", algorithms=['HS256'])
+        isEmptySecretKey = False
+    except jwt.InvalidTokenError:
+        isEmptySecretKey = True
+
     if resp.status_code != 200:
         print("Health check failed:", resp, resp.text, resp.headers)
         return
-    elif coockies.get("jwt") is None:
+    elif jwt_token is None:
         print("Health check failed: no jwt coockie")
         print(resp.request.headers)
+        return
+    elif isEmptySecretKey:
+        print("Health check failed: jwt secretkey is empty")
         return
     else:
         print("OK: health")
