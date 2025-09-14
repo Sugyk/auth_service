@@ -4,3 +4,32 @@ services:
     container_name: go_app
     ports:
       - "8080:8080"
+    environment:
+      - SecretKey=l9Xf7vQ3s8R2yT1uM6kB4hJ0aW5nZ8pC
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - DB_ADDRESS=postgres-db
+      - DB_PORT=5432
+      - DB_NAME=postgres
+      - DB_SSLMODE=disable
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    restart: on-failure
+
+  postgres-db:
+    image: postgres
+    container_name: auth_postgres
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+    ports:
+      - "5436:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+      start_period: 3s
