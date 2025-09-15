@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 )
 
@@ -12,13 +13,19 @@ func (a *APIHandler) Register() http.HandlerFunc {
 
 		login, login_ok := body["login"]
 		password, password_ok := body["password"]
-
+		hashedPassword, err := HashPassword(password)
+		if err != nil {
+			log.Println("error when hashing password")
+			http.Error(w, "something went wrong", http.StatusInternalServerError)
+			return
+		}
 		if login_ok && password_ok {
-			if err := a.dbRepo.CreateUser(login, password); err == nil {
+			if err := a.dbRepo.CreateUser(login, hashedPassword); err == nil {
 				w.Write([]byte("User created"))
 				return
 			}
 		}
-		w.Write([]byte("User is already appeares"))
+		w.WriteHeader(http.StatusConflict)
+		w.Write([]byte("User with this login is already exists"))
 	}
 }

@@ -3,11 +3,11 @@ package db_repository
 import "database/sql"
 
 type DBRepo struct {
-	db map[string]string
+	db *sql.DB
 }
 
 func NewDBRepo(db *sql.DB) *DBRepo {
 	return &DBRepo{
-		db: make(map[string]string),
+		db: db,
 	}
 }

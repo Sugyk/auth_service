@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"Sugyk/jwt_golang/db_repository"
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -19,8 +21,19 @@ func (a *APIHandler) Login() http.HandlerFunc {
 
 		login, login_ok := body["login"]
 		password, password_ok := body["password"]
-		db_password, db_ok := a.dbRepo.GetUser(login)
-		if login_ok && password_ok && db_ok && db_password == password {
+		hash_password, err := a.dbRepo.GetUserPasswordHash(login)
+		if err != nil {
+			if err == db_repository.ErrUserNotFound {
+				http.Error(w, "Wrong credentials", http.StatusBadRequest)
+				return
+			}
+			http.Error(w, "something went wrong", http.StatusInternalServerError)
+			return
+		}
+		if login_ok && password_ok {
+			if !CheckPasswordHash(password, hash_password) {
+				http.Error(w, "Wrong credentials", http.StatusBadRequest)
+			}
 			token := jwt.New(jwt.SigningMethodHS256)
 			claims := token.Claims.(jwt.MapClaims)
 			claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
@@ -29,7 +42,8 @@ func (a *APIHandler) Login() http.HandlerFunc {
 
 			tokenString, err := token.SignedString(signingKey)
 			if err != nil {
-				http.Error(w, "Error signing token", http.StatusInternalServerError)
+				log.Println("Error signing token")
+				http.Error(w, "something went wrong", http.StatusInternalServerError)
 				return
 			}
 
