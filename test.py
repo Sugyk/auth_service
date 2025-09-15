@@ -22,6 +22,13 @@ def test_api():
     else:
         print("OK: Registration")
 
+    resp = session.post(URL + "/reg", json={'login': USER_LOGIN, 'password': USER_PASSWORD})
+    if resp.status_code == 409:
+        print("OK: Re-registration restricted")
+    else:
+        print("Re-registration is successed - fail:", resp.status_code, resp.text)
+        return
+
     resp = session.post(URL + "/login", json={'login': USER_LOGIN, 'password': USER_PASSWORD})
     if resp.status_code != 200:
         print('Login failed:', resp.text)
