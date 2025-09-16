@@ -15,6 +15,8 @@ services:
     depends_on:
       postgres-db:
         condition: service_healthy
+      redis-db:
+        condition: service_healthy
     restart: on-failure
 
   postgres-db:
@@ -33,3 +35,15 @@ services:
       timeout: 2s
       retries: 10
       start_period: 3s
+
+  redis-db:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+        test: ["CMD", "redis-cli", "ping"]
+        interval: 5s
+        timeout: 3s
+        retries: 5
+        start_period: 5s
