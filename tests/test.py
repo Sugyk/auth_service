@@ -64,6 +64,17 @@ def test_api():
     else:
         print("OK: Check token authorized")
 
+    for _ in range(9):
+        resp = session.post(URL + "/login", json={'login': USER_LOGIN, 'password': USER_PASSWORD + 'wrong'})
+        if resp.status_code != 400:
+            print("Login with wrong password failed:", resp.status_code, resp.text)
+            return
+    resp = session.post(URL + "/login", json={'login': USER_LOGIN, 'password': USER_PASSWORD + 'wrong'})
+    if resp.status_code == 429:
+        print("OK: Too many requests")
+    else:
+        print("Too many requests failed:", resp.status_code, resp.text)
+        return    
 
 if __name__ == "__main__":
     test_api()

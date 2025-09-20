@@ -20,6 +20,21 @@ func (a *APIHandler) Login() http.HandlerFunc {
 		}
 
 		login, login_ok := body["login"]
+		if !login_ok {
+			http.Error(w, "Wrong credentials", http.StatusBadRequest)
+			return
+		}
+
+		loginIsBlocked, err := a.blRepo.CheckAndIncrement(login)
+		if err != nil {
+			log.Println("error checking blocklist:", err)
+			http.Error(w, "something went wrong", http.StatusInternalServerError)
+			return
+		}
+		if loginIsBlocked {
+			http.Error(w, "too many tries, try again later", http.StatusTooManyRequests)
+			return
+		}
 		password, password_ok := body["password"]
 		hash_password, err := a.dbRepo.GetUserPasswordHash(login)
 		if err != nil {
@@ -30,9 +45,10 @@ func (a *APIHandler) Login() http.HandlerFunc {
 			http.Error(w, "something went wrong", http.StatusInternalServerError)
 			return
 		}
-		if login_ok && password_ok {
+		if password_ok {
 			if !CheckPasswordHash(password, hash_password) {
 				http.Error(w, "Wrong credentials", http.StatusBadRequest)
+				return
 			}
 			token := jwt.New(jwt.SigningMethodHS256)
 			claims := token.Claims.(jwt.MapClaims)
