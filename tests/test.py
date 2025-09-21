@@ -66,7 +66,7 @@ def test_api():
 
     for _ in range(9):
         resp = session.post(URL + "/login", json={'login': USER_LOGIN, 'password': USER_PASSWORD + 'wrong'})
-        if resp.status_code != 400:
+        if resp.status_code != 401:
             print("Login with wrong password failed:", resp.status_code, resp.text)
             return
     resp = session.post(URL + "/login", json={'login': USER_LOGIN, 'password': USER_PASSWORD + 'wrong'})

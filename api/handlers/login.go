@@ -39,7 +39,7 @@ func (a *APIHandler) Login() http.HandlerFunc {
 		hash_password, err := a.dbRepo.GetUserPasswordHash(login)
 		if err != nil {
 			if err == db_repository.ErrUserNotFound {
-				http.Error(w, "Wrong credentials", http.StatusBadRequest)
+				http.Error(w, "Wrong credentials", http.StatusUnauthorized)
 				return
 			}
 			http.Error(w, "something went wrong", http.StatusInternalServerError)
@@ -47,7 +47,7 @@ func (a *APIHandler) Login() http.HandlerFunc {
 		}
 		if password_ok {
 			if !CheckPasswordHash(password, hash_password) {
-				http.Error(w, "Wrong credentials", http.StatusBadRequest)
+				http.Error(w, "Wrong credentials", http.StatusUnauthorized)
 				return
 			}
 			token := jwt.New(jwt.SigningMethodHS256)
