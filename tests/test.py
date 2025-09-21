@@ -8,7 +8,7 @@ USER_PASSWORD = 'test_password'
 
 def test_api():
     session = requests.Session()
-    resp = session.post(URL + "/check_token", json={'login': USER_LOGIN})
+    resp = session.get(URL + "/check_token")
     if resp.status_code != 400:
         print("Check token failed: expected 400, got", resp.status_code)
         return
@@ -74,7 +74,16 @@ def test_api():
         print("OK: Too many requests")
     else:
         print("Too many requests failed:", resp.status_code, resp.text)
-        return    
+        return
+    resp = session.get(URL + "/login")
+    if resp.status_code == 405:
+        print("OK: Invalid method")
+    else:
+        print("Invalid method failed:", resp.status_code, resp.text)
+        return
+    
+    print("All tests passed successfully")
+
 
 if __name__ == "__main__":
     test_api()
