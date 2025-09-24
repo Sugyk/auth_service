@@ -1,6 +1,8 @@
 # Auth Microservice
 
----
+
+### Introduction
+This is the one of the 5 microservices in e-shop pet-project 
 
 ### Features
 
