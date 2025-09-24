@@ -2,10 +2,17 @@
 
 ---
 
+### Features
+
 * Register users in PostgreSQL
 * Set JWT-tokens to users
+* Add logins to the Redis blacklist to protect it from bruteforce
 
+### Technologies
 
+* Redis
+* PostgreSQL
+* Docker Compose
 
 ### Testing
 
