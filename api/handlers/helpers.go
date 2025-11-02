@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"os"
@@ -8,14 +9,6 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 )
-
-func parseJWTCookie(r *http.Request) (string, error) {
-	cookie, err := r.Cookie("jwt")
-	if err != nil {
-		return "nil", err
-	}
-	return cookie.Value, nil
-}
 
 func getSecretKey() string {
 	return os.Getenv("SecretKey")
@@ -29,6 +22,14 @@ func HashPassword(password string) (string, error) {
 func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
+}
+
+func DecodeBody(w http.ResponseWriter, r *http.Request, dst any) error {
+	err := json.NewDecoder(r.Body).Decode(dst)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func ValidatePassword(password string) error {
