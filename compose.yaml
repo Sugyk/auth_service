@@ -5,7 +5,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SecretKey=l9Xf7vQ3s8R2yT1uM6kB4hJ0aW5nZ8pC
+      - JWT_SECRET=l9Xf7vQ3s8R2yT1uM6kB4hJ0aW5nZ8pC
       - DB_USERNAME=postgres
       - DB_PASSWORD=postgres
       - DB_ADDRESS=postgres-db

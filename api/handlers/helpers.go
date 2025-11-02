@@ -4,14 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"os"
 	"unicode"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
-func getSecretKey() string {
-	return os.Getenv("SecretKey")
+func getSecretKey() []byte {
+	return jwtSecret
 }
 
 func HashPassword(password string) (string, error) {
