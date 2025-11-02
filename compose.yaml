@@ -12,6 +12,9 @@ services:
       - DB_PORT=5432
       - DB_NAME=postgres
       - DB_SSLMODE=disable
+      - REDIS_ADDRESS=redis:6379
+      - REDIS_PASSWORD=
+      - REDIS_DB=0
     depends_on:
       postgres-db:
         condition: service_healthy

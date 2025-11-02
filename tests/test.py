@@ -9,8 +9,8 @@ USER_PASSWORD = 'test_password'
 def test_api():
     session = requests.Session()
     resp = session.get(URL + "/check_token")
-    if resp.status_code != 400:
-        print("Check token failed: expected 400, got", resp.status_code)
+    if resp.status_code != 401:
+        print("Check token failed: expected 401, got", resp.status_code)
         return
     else:
         print("OK: Check token unauthorized")
@@ -57,7 +57,7 @@ def test_api():
         return
     else:
         print("OK: health")
-    resp = session.get(URL + "/check_token")
+    resp = session.get(URL + "/check_token", headers={'Authorization': 'Bearer ' + jwt_token})
     if resp.status_code != 200:
         print("Check token failed:", resp.status_code, resp.text)
         return

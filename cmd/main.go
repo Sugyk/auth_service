@@ -4,86 +4,50 @@ import (
 	"Sugyk/jwt_golang/api/handlers"
 	"Sugyk/jwt_golang/blacklist_repository"
 	"Sugyk/jwt_golang/db_repository"
-	"context"
-	"database/sql"
-	"fmt"
+	"Sugyk/jwt_golang/packages/configs"
+	"Sugyk/jwt_golang/packages/database"
+	"Sugyk/jwt_golang/packages/migrations"
 	"log"
 	"net/http"
-	"os"
-
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
-	"github.com/redis/go-redis/v9"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
 )
 
-func runMigrations(db *sql.DB) error {
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
-	if err != nil {
-		return err
-	}
-
-	m, err := migrate.NewWithDatabaseInstance(
-		"file://migrations",
-		"postgres",
-		driver,
-	)
-	if err != nil {
-		return fmt.Errorf("could not create migration instance: %w", err)
-	}
-
-	err = m.Up()
-	if err != nil && err != migrate.ErrNoChange {
-		return fmt.Errorf("could not up migrates: %w", err)
-	}
-
-	if err == migrate.ErrNoChange {
-		log.Println("No changes to migrate")
-	} else {
-		log.Println("Migrations applied successfully")
-	}
-
-	return nil
-}
-
 func main() {
 	mux := http.NewServeMux()
-	connStr := fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
-		os.Getenv("DB_USERNAME"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_ADDRESS"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_NAME"),
-		os.Getenv("DB_SSLMODE"),
+	db_config := configs.NewDBConfig()
+	db, err := database.NewDbConnection(
+		db_config.Username,
+		db_config.Password,
+		db_config.Address,
+		db_config.Port,
+		db_config.Db_name,
+		db_config.Ssl_mode,
 	)
-	db, err := sql.Open("postgres", connStr)
 	if err != nil {
-		log.Fatal("error when opening db connection:", err)
+		log.Fatalf("error when opening db connection: %v", err)
 	}
 	defer db.Close()
-	err = db.Ping()
-	if err != nil {
-		log.Fatal(err)
-	}
 	log.Println("db connection is established")
-	err = runMigrations(db)
+	err = migrations.RunMigrations(db)
 	if err != nil {
 		log.Fatal("migration failed:", err)
 	}
 
 	dbRepo := db_repository.NewDBRepo(db)
-
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     "redis:6379",
-		Password: "",
-		DB:       0,
-	})
-	err = redisClient.Ping(context.Background()).Err()
+	redisConfig, err := configs.NewRedisConfig()
 	if err != nil {
-		log.Fatal("redis connection error: %w", err)
+		log.Fatalf("error getting configs for redis: %v", err)
+	}
+
+	redisClient, err := database.NewRedisConnection(
+		redisConfig.Addr,
+		redisConfig.Password,
+		redisConfig.DB,
+	)
+	if err != nil {
+		log.Fatalf("error connecting redis: %v", err)
 	}
 	blRepo := blacklist_repository.NewBLRepo(redisClient)
 
