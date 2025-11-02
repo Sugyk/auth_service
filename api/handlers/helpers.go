@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 	"unicode"
 
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -70,4 +72,18 @@ func ValidatePassword(password string) error {
 	}
 
 	return nil
+}
+
+func CreateJWT(login string) (string, error) {
+	token := jwt.New(jwt.SigningMethodHS256)
+	claims := token.Claims.(jwt.MapClaims)
+	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
+	claims["iat"] = time.Now().Unix()
+	claims["sub"] = login
+
+	tokenString, err := token.SignedString(getSecretKey())
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
 }

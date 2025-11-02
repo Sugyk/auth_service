@@ -3,16 +3,18 @@ package handlers
 import (
 	"Sugyk/jwt_golang/db_repository"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"time"
+)
 
-	"github.com/golang-jwt/jwt/v5"
+var (
+	ErrCreatingJWT = errors.New("error creating jwt")
 )
 
 func (a *APIHandler) Login() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		signingKey := []byte(getSecretKey())
 		body := make(map[string]string)
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -50,16 +52,10 @@ func (a *APIHandler) Login() http.HandlerFunc {
 				http.Error(w, "Wrong credentials", http.StatusUnauthorized)
 				return
 			}
-			token := jwt.New(jwt.SigningMethodHS256)
-			claims := token.Claims.(jwt.MapClaims)
-			claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
-			claims["iat"] = time.Now().Unix()
-			claims["sub"] = login
-
-			tokenString, err := token.SignedString(signingKey)
+			tokenString, err := CreateJWT(login)
 			if err != nil {
-				log.Println("Error signing token")
-				http.Error(w, "something went wrong", http.StatusInternalServerError)
+				log.Printf("error creating jwt: %v", err)
+				http.Error(w, ErrCreatingJWT.Error(), http.StatusInternalServerError)
 				return
 			}
 
