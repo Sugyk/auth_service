@@ -7,12 +7,53 @@ import (
 )
 
 func TestCheckJWT(t *testing.T) {
-	rr := httptest.NewRecorder()
+	t.Setenv("JWT_SECRET", "secret")
+	checkJwtRoutePath := "/check_token"
+
+	var req *http.Request
+	var rr *httptest.ResponseRecorder
 	handler := NewAPIHandler(nil, nil).CheckJWT()
-	req := httptest.NewRequest(http.MethodGet, "/check_token", nil)
+
+	rr = httptest.NewRecorder()
+	req = httptest.NewRequest(http.MethodGet, checkJwtRoutePath, nil)
+
+	test_login := "test_login"
+	jwt, _ := CreateJWT(test_login)
+
+	req.Header.Add("Authorization", "Bearer "+jwt)
+
 	handler.ServeHTTP(rr, req)
+	// Check with Authorization header
+	if rr.Result().StatusCode != http.StatusOK {
+		t.Errorf(`Error of checking jwt
+		Request Headers: %v
+		Got: %d
+		Expected: %d`, req.Header, rr.Result().StatusCode, http.StatusOK)
+	}
 
-	jwtSecret = []byte("secret")
+	// Check without token in Authorization header
+	req = httptest.NewRequest(http.MethodGet, checkJwtRoutePath, nil)
+	rr = httptest.NewRecorder()
 
-	// if rr.Result().StatusCode !=
+	handler.ServeHTTP(rr, req)
+	if rr.Result().StatusCode != http.StatusUnauthorized {
+		t.Errorf(`Error of checking jwt
+		Request Headers: %v
+		Got: %d
+		Expected: %d`, req.Header, rr.Result().StatusCode, http.StatusUnauthorized)
+	}
+
+	// Put wrong jwt to Authorization header
+	req = httptest.NewRequest(http.MethodGet, checkJwtRoutePath, nil)
+	req.Header.Set("Authorization", "Bearer "+"invalid_jwt")
+	rr = httptest.NewRecorder()
+
+	handler.ServeHTTP(rr, req)
+	if rr.Result().StatusCode != http.StatusUnauthorized {
+		t.Errorf(`Error of checking jwt
+		Request Headers: %v
+		Got: %d
+		Expected: %d`, req.Header, rr.Result().StatusCode, http.StatusUnauthorized)
+	}
+
 }

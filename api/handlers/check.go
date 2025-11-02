@@ -33,7 +33,7 @@ func (a *APIHandler) CheckJWT() http.HandlerFunc {
 		if err != nil || !t.Valid {
 			log.Println()
 			log.Printf("error when validating jwt: %v", err)
-			http.Error(w, ErrInvalidJWT.Error(), http.StatusBadRequest)
+			http.Error(w, ErrInvalidJWT.Error(), http.StatusUnauthorized)
 			return
 		}
 
