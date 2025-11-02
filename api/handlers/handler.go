@@ -8,20 +8,18 @@ import (
 
 var jwtSecret []byte
 
-func init() {
-	secret := os.Getenv("JWT_SECRET")
-	if secret == "" {
-		panic("JWT_SECRET environment variable is not set")
-	}
-	jwtSecret = []byte(secret)
-}
-
 type APIHandler struct {
 	dbRepo *db_repository.DBRepo
 	blRepo *blacklist_repository.BLRepo
 }
 
 func NewAPIHandler(dbRepo *db_repository.DBRepo, blRepo *blacklist_repository.BLRepo) *APIHandler {
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		panic("JWT_SECRET environment variable is not set")
+	}
+	jwtSecret = []byte(secret)
+
 	return &APIHandler{
 		dbRepo: dbRepo,
 		blRepo: blRepo,
