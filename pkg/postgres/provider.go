@@ -1,4 +1,4 @@
-package pgprovider
+package postgres
 
 import (
 	"context"
