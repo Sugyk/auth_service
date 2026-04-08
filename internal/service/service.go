@@ -1,8 +1,13 @@
 package service
 
-import "context"
+import (
+	"context"
+	"fmt"
+)
 
-type Repository interface{}
+type Repository interface {
+	CreateUser(ctx context.Context, login string, password string) error
+}
 
 type TxManager interface {
 	WithTx(ctx context.Context, fn func(ctx context.Context) error) error
@@ -18,4 +23,21 @@ func NewService(repo Repository, txManager TxManager) *Service {
 		txManager: txManager,
 		repo:      repo,
 	}
+}
+
+func (s *Service) Register(ctx context.Context, login string, password string) error {
+	txErr := s.txManager.WithTx(
+		ctx,
+		func(ctx context.Context) error {
+			if err := s.repo.CreateUser(ctx, login, password); err != nil {
+				return fmt.Errorf("creating user: %w", err)
+			}
+			return nil
+		},
+	)
+	if txErr != nil {
+		return fmt.Errorf("error executing tx: %w", txErr)
+	}
+
+	return nil
 }
