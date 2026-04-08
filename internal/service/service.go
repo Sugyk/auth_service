@@ -1,13 +1,21 @@
 package service
 
+import "context"
+
 type Repository interface{}
 
-type Service struct {
-	repo Repository
+type TxManager interface {
+	WithTx(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
-func NewService(repo Repository) *Service {
+type Service struct {
+	txManager TxManager
+	repo      Repository
+}
+
+func NewService(repo Repository, txManager TxManager) *Service {
 	return &Service{
-		repo: repo,
+		txManager: txManager,
+		repo:      repo,
 	}
 }
