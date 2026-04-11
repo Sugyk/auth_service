@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -54,6 +55,7 @@ func NewTxManager(db *pgxpool.Pool) TxManager {
 
 type Executor interface {
 	QueryRow(ctx context.Context, query string, args ...any) pgx.Row
+	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
 }
 
 func TxFromCtx(ctx context.Context) (pgx.Tx, bool) {
