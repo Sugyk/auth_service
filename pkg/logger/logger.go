@@ -15,7 +15,6 @@ func New(level string) Logger {
 	return newSlogLogger(level)
 }
 
-// NewNoop — для тестов
 func NewNoop() Logger {
 	return noopLogger{}
 }
