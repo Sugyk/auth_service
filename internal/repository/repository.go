@@ -2,9 +2,9 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
+	"github.com/Sugyk/auth_service/internal/models"
 	"github.com/Sugyk/auth_service/pkg/postgres"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -24,16 +24,14 @@ func (d *Repository) CreateUser(ctx context.Context, login string, password stri
         INSERT INTO users (login, password_hash) 
         VALUES ($1, $2)
         ON CONFLICT (login) DO NOTHING
-        RETURNING id
     `
 
-	var id int
-	err := exec.QueryRow(ctx, query, login, password).Scan(&id)
+	tag, err := exec.Exec(ctx, query, login, password)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return fmt.Errorf("login '%s' is already exists", login)
-		}
-		return fmt.Errorf("db error: %w", err)
+		return fmt.Errorf("create user in postgres: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return models.ErrDuplicate
 	}
 	return nil
 }
