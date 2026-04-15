@@ -8,3 +8,7 @@ type PgConfig struct {
 	MaxConnLifetime int
 	MaxConnIdleTime int
 }
+
+type HasherConfig struct {
+	Cost int
+}
