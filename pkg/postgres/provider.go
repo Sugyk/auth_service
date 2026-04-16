@@ -57,6 +57,10 @@ func (p *Provider) Open(ctx context.Context) error {
 	return nil
 }
 
+func (p *Provider) DB() *pgxpool.Pool {
+	return p.pool
+}
+
 func NewProvider(logger Logger,
 	ConnStr string,
 	MaxConns int32,

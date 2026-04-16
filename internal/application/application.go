@@ -6,11 +6,11 @@ import (
 
 	http_api "github.com/Sugyk/auth_service/internal/api/http"
 	"github.com/Sugyk/auth_service/internal/config"
+	"github.com/Sugyk/auth_service/internal/pkg/hasher"
 	"github.com/Sugyk/auth_service/internal/repository"
 	"github.com/Sugyk/auth_service/internal/service"
 	"github.com/Sugyk/auth_service/pkg/logger"
 	"github.com/Sugyk/auth_service/pkg/postgres"
-	pgprovider "github.com/Sugyk/auth_service/pkg/postgres"
 )
 
 const LOGLEVEL = "warn"
@@ -18,14 +18,16 @@ const LOGLEVEL = "warn"
 // Struct that representing whole application
 type Application struct {
 	logger logger.Logger
-	db     *pgprovider.Provider
+	db     *postgres.Provider
 
 	dbCfg     *config.PgConfig
 	hasherCfg *config.HasherConfig
 
 	repository *repository.Repository
-	service    *service.Service
-	router     *http_api.Router
+
+	service *service.Service
+
+	router *http_api.Router
 }
 
 func (a *Application) Init(ctx context.Context) {
@@ -42,7 +44,13 @@ func (a *Application) Init(ctx context.Context) {
 		log.Fatalln("Init application DB error:", err)
 	}
 	// Init Repo layer
+	if err := a.InitRepository(); err != nil {
+		log.Fatalln("Init application repository error:", err)
+	}
 	// Init Service layer
+	if err := a.InitService(); err != nil {
+		log.Fatalln("Init application service error:", err)
+	}
 	// Init Handlers layer
 	// Init Router
 }
@@ -81,5 +89,24 @@ func (a *Application) InitDB(ctx context.Context) error {
 	if err := provider.Open(ctx); err != nil {
 		return err
 	}
+	return nil
+}
+
+func (a *Application) InitRepository() error {
+	a.repository = repository.NewRepository()
+
+	return nil
+}
+
+func (a *Application) InitService() error {
+	txManager := postgres.NewTxManager(a.db.DB())
+	passwordHasher := hasher.NewPasswordHasher(a.hasherCfg.Cost)
+
+	a.service = service.NewService(
+		a.repository,
+		txManager,
+		passwordHasher,
+	)
+
 	return nil
 }
