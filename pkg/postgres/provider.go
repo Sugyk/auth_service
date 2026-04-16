@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Sugyk/auth_service/pkg/config"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -16,19 +15,24 @@ type Logger interface {
 type Provider struct {
 	pool   *pgxpool.Pool
 	logger Logger
-	cfg    config.PgConfig
+
+	ConnStr         string
+	MaxConns        int32
+	MinConns        int32
+	MaxConnLifetime int
+	MaxConnIdleTime int
 }
 
 func (p *Provider) Open(ctx context.Context) error {
-	poolConfig, err := pgxpool.ParseConfig(p.cfg.ConnStr)
+	poolConfig, err := pgxpool.ParseConfig(p.ConnStr)
 	if err != nil {
 		return fmt.Errorf("parse connection string: %w", err)
 	}
 
-	poolConfig.MaxConns = p.cfg.MaxConns
-	poolConfig.MinConns = p.cfg.MinConns
-	poolConfig.MaxConnLifetime = time.Duration(p.cfg.MaxConnLifetime) * time.Minute
-	poolConfig.MaxConnIdleTime = time.Duration(p.cfg.MaxConnIdleTime) * time.Minute
+	poolConfig.MaxConns = p.MaxConns
+	poolConfig.MinConns = p.MinConns
+	poolConfig.MaxConnLifetime = time.Duration(p.MaxConnLifetime) * time.Minute
+	poolConfig.MaxConnIdleTime = time.Duration(p.MaxConnIdleTime) * time.Minute
 
 	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
@@ -52,9 +56,19 @@ func (p *Provider) Open(ctx context.Context) error {
 	return nil
 }
 
-func NewProvider(logger Logger, config config.PgConfig) *Provider {
+func NewProvider(logger Logger,
+	ConnStr string,
+	MaxConns int32,
+	MinConns int32,
+	MaxConnLifetime int,
+	MaxConnIdleTime int,
+) *Provider {
 	return &Provider{
-		logger: logger,
-		cfg:    config,
+		logger:          logger,
+		ConnStr:         ConnStr,
+		MaxConns:        MaxConns,
+		MinConns:        MinConns,
+		MaxConnLifetime: MaxConnLifetime,
+		MaxConnIdleTime: MaxConnIdleTime,
 	}
 }
