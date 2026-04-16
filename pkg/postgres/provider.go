@@ -9,7 +9,7 @@ import (
 )
 
 type Logger interface {
-	Info(msg string, args ...any)
+	Info(ctx context.Context, msg string, args ...any)
 }
 
 type Provider struct {
@@ -48,6 +48,7 @@ func (p *Provider) Open(ctx context.Context) error {
 	p.pool = pool
 
 	p.logger.Info(
+		ctx,
 		"Connected to PostgreSQL: %s/%s",
 		poolConfig.ConnConfig.Host,
 		poolConfig.ConnConfig.Port,
