@@ -5,6 +5,7 @@ import (
 	"log"
 
 	http_api "github.com/Sugyk/auth_service/internal/api/http"
+	"github.com/Sugyk/auth_service/internal/api/http/handlers"
 	"github.com/Sugyk/auth_service/internal/config"
 	"github.com/Sugyk/auth_service/internal/pkg/hasher"
 	"github.com/Sugyk/auth_service/internal/repository"
@@ -26,6 +27,8 @@ type Application struct {
 	repository *repository.Repository
 
 	service *service.Service
+
+	handler *handlers.Handler
 
 	router *http_api.Router
 }
@@ -52,7 +55,14 @@ func (a *Application) Init(ctx context.Context) {
 		log.Fatalln("Init application service error:", err)
 	}
 	// Init Handlers layer
+	if err := a.InitHandler(); err != nil {
+		log.Fatalln("Init application handler error:", err)
+	}
 	// Init Router
+	if err := a.InitHandler(); err != nil {
+		log.Fatalln("Init application router error:", err)
+	}
+
 }
 
 func NewApplication() *Application {
@@ -107,6 +117,18 @@ func (a *Application) InitService() error {
 		txManager,
 		passwordHasher,
 	)
+
+	return nil
+}
+
+func (a *Application) InitHandler() error {
+	a.handler = handlers.NewHandler(a.service)
+
+	return nil
+}
+
+func (a *Application) InitRouter() error {
+	a.router = http_api.NewRouter(a.handler)
 
 	return nil
 }
