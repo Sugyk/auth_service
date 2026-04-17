@@ -14,7 +14,7 @@ import (
 	"github.com/Sugyk/auth_service/pkg/postgres"
 )
 
-const LOGLEVEL = "warn"
+const LOGLEVEL = "info"
 
 // Struct that representing whole application
 type Application struct {
@@ -99,6 +99,9 @@ func (a *Application) InitDB(ctx context.Context) error {
 	if err := provider.Open(ctx); err != nil {
 		return err
 	}
+
+	a.db = provider
+
 	return nil
 }
 

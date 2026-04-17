@@ -19,9 +19,9 @@ func LoadConfig() (*PgConfig, *HasherConfig, error) {
 	// Настройка для YAML
 	v.SetConfigName("config") // имя файла без расширения
 	v.SetConfigType("yaml")
-	v.AddConfigPath(".")         // текущая директория
-	v.AddConfigPath("./config")  // папка config
-	v.AddConfigPath("./configs") // часто используют configs (мн.ч.)
+	v.AddConfigPath(".")            // текущая директория
+	v.AddConfigPath("./config")     // папка config
+	v.AddConfigPath("./app/config") // часто используют configs (мн.ч.)
 	v.AddConfigPath(filepath.Join(".", "config"))
 
 	// Автоматическое приведение имён переменных окружения
