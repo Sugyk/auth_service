@@ -62,7 +62,7 @@ func (a *Application) Init(ctx context.Context) {
 	if err := a.InitHandler(); err != nil {
 		log.Fatalln("Init application router error:", err)
 	}
-
+	a.logger.Info(ctx, "App initialisation completed successfully")
 }
 
 func NewApplication() *Application {
