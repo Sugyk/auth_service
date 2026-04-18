@@ -49,9 +49,9 @@ func (p *Provider) Open(ctx context.Context) error {
 
 	p.logger.Info(
 		ctx,
-		"Connected to PostgreSQL: %s/%s",
-		poolConfig.ConnConfig.Host,
-		poolConfig.ConnConfig.Port,
+		"Connected to PostgreSQL",
+		"host", poolConfig.ConnConfig.Host,
+		"port", poolConfig.ConnConfig.Port,
 	)
 
 	return nil
