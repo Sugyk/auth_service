@@ -1,6 +1,8 @@
 package http_api
 
 import (
+	"context"
+	"errors"
 	"net/http"
 )
 
@@ -24,4 +26,16 @@ func NewRouter(handler Handler) *Router {
 	return &Router{
 		server: server,
 	}
+}
+
+func (r *Router) Start() error {
+	return r.server.ListenAndServe()
+}
+
+func (r *Router) Shutdown(ctx context.Context) error {
+	var err error
+	if err = r.server.Shutdown(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return nil
+	}
+	return err
 }

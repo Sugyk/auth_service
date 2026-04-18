@@ -2,7 +2,11 @@ package application
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	http_api "github.com/Sugyk/auth_service/internal/api/http"
 	"github.com/Sugyk/auth_service/internal/api/http/handlers"
@@ -59,7 +63,7 @@ func (a *Application) Init(ctx context.Context) {
 		log.Fatalln("Init application handler error:", err)
 	}
 	// Init Router
-	if err := a.InitHandler(); err != nil {
+	if err := a.InitRouter(); err != nil {
 		log.Fatalln("Init application router error:", err)
 	}
 	a.logger.Info(ctx, "App initialisation completed successfully")
@@ -134,4 +138,37 @@ func (a *Application) InitRouter() error {
 	a.router = http_api.NewRouter(a.handler)
 
 	return nil
+}
+
+func (a *Application) Start(ctx context.Context) error {
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	errchan := make(chan error, 1)
+
+	go func() {
+		errchan <- a.router.Start()
+	}()
+
+	var err error
+
+	select {
+	case <-sigChan:
+		a.logger.Info(ctx, "got signal to shutdown")
+		return nil
+	case err = <-errchan:
+		return fmt.Errorf("server crashed with error: %w", err)
+	}
+}
+
+func (a *Application) Shutdown(ctx context.Context) {
+	a.logger.Info(ctx, "starting gracefull shutdown")
+
+	if err := a.router.Shutdown(ctx); err != nil {
+		a.logger.Info(ctx, "server closed with error", "error", err)
+	}
+
+	a.db.Close()
+	a.logger.Info(ctx, "db connection closed")
+
+	a.logger.Info(ctx, "gracefull shutdown completed without error")
 }

@@ -61,6 +61,10 @@ func (p *Provider) DB() *pgxpool.Pool {
 	return p.pool
 }
 
+func (p *Provider) Close() {
+	p.pool.Close()
+}
+
 func NewProvider(logger Logger,
 	ConnStr string,
 	MaxConns int32,
