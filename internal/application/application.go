@@ -165,10 +165,12 @@ func (a *Application) Shutdown(ctx context.Context) {
 
 	if err := a.router.Shutdown(ctx); err != nil {
 		a.logger.Info(ctx, "server closed with error", "error", err)
+	} else {
+		a.logger.Info(ctx, "server closed with no errors")
 	}
 
 	a.db.Close()
 	a.logger.Info(ctx, "db connection closed")
 
-	a.logger.Info(ctx, "gracefull shutdown completed without error")
+	a.logger.Info(ctx, "gracefull shutdown completed without errors")
 }
