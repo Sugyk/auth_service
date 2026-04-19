@@ -14,3 +14,7 @@ func (r *RegisterRequest) Validate() error {
 	}
 	return nil
 }
+
+type RegisterResponse201 struct {
+	Message string `json:"message"`
+}

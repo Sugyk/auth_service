@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/Sugyk/auth_service/internal/models"
@@ -43,5 +44,10 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		h.handleError(ctx, w, serviceErr)
 		return
 	}
-	h.sendJSON(ctx, w, http.StatusCreated, nil)
+
+	resp := models.RegisterResponse201{
+		Message: fmt.Sprintf("user with login '%s' created", reqBody.Login),
+	}
+
+	h.sendJSON(ctx, w, http.StatusCreated, resp)
 }
