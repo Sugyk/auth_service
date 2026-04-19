@@ -41,5 +41,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	serviceErr := h.service.Register(ctx, reqBody.Login, reqBody.Password)
 	if serviceErr != nil {
 		h.handleError(ctx, w, serviceErr)
+		return
 	}
+	h.sendJSON(ctx, w, http.StatusCreated, nil)
 }

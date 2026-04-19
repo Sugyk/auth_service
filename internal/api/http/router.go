@@ -6,7 +6,9 @@ import (
 	"net/http"
 )
 
-type Handler interface{}
+type Handler interface {
+	Register(w http.ResponseWriter, r *http.Request)
+}
 
 type Router struct {
 	server *http.Server
@@ -16,10 +18,11 @@ func NewRouter(handler Handler) *Router {
 	mux := http.NewServeMux()
 
 	// Routes
-
+	mux.HandleFunc("POST /reg", handler.Register)
 	//
 
 	server := &http.Server{
+		Addr:    ":8080",
 		Handler: mux,
 	}
 
