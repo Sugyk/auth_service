@@ -3,9 +3,11 @@ module github.com/Sugyk/auth_service
 go 1.25.0
 
 require (
-	github.com/jackc/pgx/v5 v5.9.1
+	github.com/golang/mock v1.6.0
+	github.com/jackc/pgx/v5 v5.9.2
 	github.com/joho/godotenv v1.5.1
 	github.com/spf13/viper v1.21.0
+	go.uber.org/mock v0.6.0
 	golang.org/x/crypto v0.50.0
 )
 

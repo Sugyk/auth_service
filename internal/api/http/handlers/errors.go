@@ -31,6 +31,7 @@ func (h *Handler) handleError(ctx context.Context, w http.ResponseWriter, err er
 	if !ok {
 		h.sendJSON(ctx, w, http.StatusInternalServerError, models.NewInternalErr())
 		h.logger.Error(ctx, "internal error", "error", err.Error())
+		return
 	}
 
 	httpStatus := h.mapErrToHttpStatus(ctx, appErr.ErrCode)

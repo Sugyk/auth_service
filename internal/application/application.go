@@ -129,7 +129,7 @@ func (a *Application) InitService() error {
 }
 
 func (a *Application) InitHandler() error {
-	a.handler = handlers.NewHandler(a.service)
+	a.handler = handlers.NewHandler(a.service, a.logger)
 
 	return nil
 }

@@ -1,3 +1,5 @@
+//go:generate mockgen -destination=service_mock.go -source=handler.go -package=handlers
+
 package handlers
 
 import (
@@ -19,9 +21,10 @@ type Handler struct {
 	logger  logger.Logger
 }
 
-func NewHandler(service Service) *Handler {
+func NewHandler(service Service, logger logger.Logger) *Handler {
 	return &Handler{
 		service: service,
+		logger:  logger,
 	}
 }
 

@@ -22,21 +22,16 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    # Выполнит все .up.sql файлы и остановится
     command: [
       "-path", "/migrations",
       "-database", "postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable",
       "up"
     ]
-    restart: "no"  # Важно: контейнер не будет перезапускаться после завершения
+    restart: "no"
 
   service:
     build:
       dockerfile: docker/Dockerfile
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
     container_name: auth_service
     ports:
       - "8080:8080"
