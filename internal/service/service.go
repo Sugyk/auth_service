@@ -54,3 +54,8 @@ func (s *Service) Register(ctx context.Context, login string, password string) e
 
 	return nil
 }
+
+// Login method boilerplate
+func (s *Service) Login(ctx context.Context, login string, password string) (string, error) {
+	return "", nil
+}

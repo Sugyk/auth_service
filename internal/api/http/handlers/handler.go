@@ -14,6 +14,7 @@ import (
 
 type Service interface {
 	Register(ctx context.Context, login string, password string) error
+	Login(ctx context.Context, login string, password string) (string, error)
 }
 
 type Handler struct {
@@ -53,4 +54,32 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.sendJSON(ctx, w, http.StatusCreated, resp)
+}
+
+func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var reqBody models.LoginRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+		h.handleError(ctx, w, models.NewValidationErr("error decoding body"))
+		return
+	}
+	if err := reqBody.Validate(); err != nil {
+		h.handleError(ctx, w, err)
+		return
+	}
+
+	accessToken, serviceErr := h.service.Login(ctx, reqBody.Login, reqBody.Password)
+
+	if serviceErr != nil {
+		h.handleError(ctx, w, serviceErr)
+		return
+	}
+
+	resp := models.LoginResponse200{
+		AccessToken: accessToken,
+	}
+
+	h.sendJSON(ctx, w, http.StatusOK, resp)
 }
