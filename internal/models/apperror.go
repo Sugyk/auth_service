@@ -8,9 +8,10 @@ import (
 type ErrorCode string
 
 const (
-	CodeErrDuplicate    ErrorCode = "Duplicate login"
-	CodeValidationError ErrorCode = "Validation error"
-	CodeInternalError   ErrorCode = "Internal error"
+	CodeErrDuplicate     ErrorCode = "Duplicate login"
+	CodeValidationError  ErrorCode = "Validation error"
+	CodeInternalError    ErrorCode = "Internal error"
+	CodeWrongCredentials ErrorCode = "Wrong credentials"
 )
 
 // Error type that contains ready info about errors for user
@@ -47,6 +48,14 @@ func NewValidationErr(message string) *AppError {
 
 func NewInternalErr() *AppError {
 	return New(CodeInternalError, "internal error")
+}
+
+func NewLoginNotFound() *AppError {
+	return New(CodeWrongCredentials, "There is incorrect login or password")
+}
+
+func NewWrongPassword() *AppError {
+	return New(CodeWrongCredentials, "There is incorrect login or password")
 }
 
 // Helpers

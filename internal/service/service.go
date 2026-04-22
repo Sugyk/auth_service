@@ -7,10 +7,12 @@ import (
 
 	"github.com/Sugyk/auth_service/internal/models"
 	"github.com/Sugyk/auth_service/internal/pkg/hasher"
+	"github.com/Sugyk/auth_service/internal/pkg/jwt_manager"
 )
 
 type Repository interface {
 	CreateUser(ctx context.Context, login string, password string) error
+	GetPasswordByLogin(ctx context.Context, login string) (string, error)
 }
 
 type TxManager interface {
@@ -18,9 +20,10 @@ type TxManager interface {
 }
 
 type Service struct {
-	txManager TxManager
-	repo      Repository
-	hasher    hasher.PasswordHasher
+	txManager  TxManager
+	repo       Repository
+	hasher     hasher.PasswordHasher
+	jwtManager jwt_manager.JWTManager
 }
 
 func NewService(repo Repository, txManager TxManager, hasher hasher.PasswordHasher) *Service {
@@ -57,5 +60,25 @@ func (s *Service) Register(ctx context.Context, login string, password string) e
 
 // Login method boilerplate
 func (s *Service) Login(ctx context.Context, login string, password string) (string, error) {
-	return "", nil
+
+	passHash, err := s.repo.GetPasswordByLogin(ctx, login)
+
+	if err != nil {
+		if errors.Is(err, models.ErrLoginNotFound) {
+			return "", models.NewLoginNotFound()
+		}
+		return "", fmt.Errorf("get password by login: %w", err)
+	}
+
+	if !s.hasher.CompareHashAndPassword(password, passHash) {
+		return "", models.NewWrongPassword()
+	}
+
+	token, err := s.jwtManager.CreateJWT(login)
+
+	if err != nil {
+		return "", models.NewInternalErr()
+	}
+
+	return token, nil
 }
