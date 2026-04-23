@@ -243,6 +243,20 @@ func TestHandler_Login(t *testing.T) {
 			expectedStatus: http.StatusUnauthorized,
 			expectedErr:    models.NewLoginNotFound(),
 		},
+		{
+			name: "Wrong password",
+			requestBody: models.LoginRequest{
+				Login:    "existinguser",
+				Password: "WrongStrongPass12345678!",
+			},
+			setupMock: func() {
+				mockService.EXPECT().
+					Login(gomock.Any(), "existinguser", "WrongStrongPass12345678!").
+					Return("", models.NewWrongPassword())
+			},
+			expectedStatus: http.StatusUnauthorized,
+			expectedErr:    models.NewWrongPassword(),
+		},
 	}
 
 	for _, tt := range tests {
