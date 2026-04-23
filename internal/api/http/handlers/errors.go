@@ -8,9 +8,10 @@ import (
 )
 
 var codeToStatusMap = map[models.ErrorCode]int{
-	models.CodeInternalError:   http.StatusInternalServerError,
-	models.CodeErrDuplicate:    http.StatusConflict,
-	models.CodeValidationError: http.StatusBadRequest,
+	models.CodeInternalError:    http.StatusInternalServerError,
+	models.CodeErrDuplicate:     http.StatusConflict,
+	models.CodeValidationError:  http.StatusBadRequest,
+	models.CodeWrongCredentials: http.StatusUnauthorized,
 }
 
 func (h *Handler) mapErrToHttpStatus(ctx context.Context, errCode models.ErrorCode) int {

@@ -37,7 +37,3 @@ func (r *LoginRequest) Validate() error {
 type LoginResponse200 struct {
 	AccessToken string `json:"access_token"`
 }
-
-type LoginResponse401 struct {
-	Message string `json:"message"`
-}
