@@ -286,9 +286,6 @@ func TestHandler_Login(t *testing.T) {
 			if rr.Code != tt.expectedStatus {
 				t.Errorf("expected status %d, got %d", tt.expectedStatus, rr.Code)
 			}
-			if tt.expectedBody != nil {
-
-			}
 			if tt.expectedErr != nil {
 				var gotErr models.AppError
 				if err := json.NewDecoder(rr.Body).Decode(&gotErr); err != nil {
