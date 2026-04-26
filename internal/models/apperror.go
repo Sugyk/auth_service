@@ -19,16 +19,22 @@ const (
 type AppError struct {
 	ErrCode ErrorCode `json:"error"`
 	Details string    `json:"details"`
+	cause   string    `json:"-"`
 }
 
 func (a *AppError) Error() string {
 	return fmt.Sprintf("%s: %s", a.ErrCode, a.Details)
 }
 
-func New(errCode ErrorCode, details string) *AppError {
+func (e *AppError) Cause() string {
+	return e.cause
+}
+
+func New(errCode ErrorCode, details string, cause string) *AppError {
 	return &AppError{
 		ErrCode: errCode,
 		Details: details,
+		cause:   cause,
 	}
 }
 
@@ -36,6 +42,7 @@ func NewDuplicateLoginErr(login string) *AppError {
 	return New(
 		CodeErrDuplicate,
 		fmt.Sprintf("Login %s is already exists", login),
+		"",
 	)
 }
 
@@ -43,19 +50,28 @@ func NewValidationErr(message string) *AppError {
 	return New(
 		CodeValidationError,
 		message,
+		"",
 	)
 }
 
-func NewInternalErr() *AppError {
-	return New(CodeInternalError, "internal error")
+func NewInternalErr(cause string) *AppError {
+	return New(CodeInternalError, "internal error", cause)
 }
 
-func NewLoginNotFound() *AppError {
-	return New(CodeWrongCredentials, "There is incorrect login or password")
+func NewLoginNotFound(login string) *AppError {
+	return New(
+		CodeWrongCredentials,
+		"There is incorrect login or password",
+		fmt.Sprintf("login '%s' not found", login),
+	)
 }
 
-func NewWrongPassword() *AppError {
-	return New(CodeWrongCredentials, "There is incorrect login or password")
+func NewWrongPassword(login string) *AppError {
+	return New(
+		CodeWrongCredentials,
+		"There is incorrect login or password",
+		fmt.Sprintf("incorrect password for login '%s'", login),
+	)
 }
 
 // Helpers

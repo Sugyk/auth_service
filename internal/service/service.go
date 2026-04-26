@@ -65,19 +65,19 @@ func (s *Service) Login(ctx context.Context, login string, password string) (str
 
 	if err != nil {
 		if errors.Is(err, models.ErrLoginNotFound) {
-			return "", models.NewLoginNotFound()
+			return "", models.NewLoginNotFound(login)
 		}
 		return "", fmt.Errorf("get password by login: %w", err)
 	}
 
 	if !s.hasher.CompareHashAndPassword(password, passHash) {
-		return "", models.NewWrongPassword()
+		return "", models.NewWrongPassword(login)
 	}
 
 	token, err := s.jwtManager.CreateJWT(login)
 
 	if err != nil {
-		return "", models.NewInternalErr()
+		return "", models.NewInternalErr(err.Error())
 	}
 
 	return token, nil

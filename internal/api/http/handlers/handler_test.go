@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/Sugyk/auth_service/internal/models"
 	"github.com/Sugyk/auth_service/pkg/logger"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
 
@@ -95,7 +97,7 @@ func TestHandler_Register(t *testing.T) {
 					Return(errors.New("database timeout"))
 			},
 			expectedStatus: http.StatusInternalServerError,
-			expectedErr:    models.NewInternalErr(),
+			expectedErr:    models.NewInternalErr("database timeout"),
 		},
 	}
 
@@ -227,7 +229,7 @@ func TestHandler_Login(t *testing.T) {
 					Return("", errors.New("database timeout"))
 			},
 			expectedStatus: http.StatusInternalServerError,
-			expectedErr:    models.NewInternalErr(),
+			expectedErr:    models.NewInternalErr("database timeout"),
 		},
 		{
 			name: "Login not found",
@@ -238,10 +240,10 @@ func TestHandler_Login(t *testing.T) {
 			setupMock: func() {
 				mockService.EXPECT().
 					Login(gomock.Any(), "unexistinguser", "StrongPass12345678!").
-					Return("", models.NewLoginNotFound())
+					Return("", models.NewLoginNotFound("unexistinguser"))
 			},
 			expectedStatus: http.StatusUnauthorized,
-			expectedErr:    models.NewLoginNotFound(),
+			expectedErr:    models.NewLoginNotFound("unexistinguser"),
 		},
 		{
 			name: "Wrong password",
@@ -252,10 +254,10 @@ func TestHandler_Login(t *testing.T) {
 			setupMock: func() {
 				mockService.EXPECT().
 					Login(gomock.Any(), "existinguser", "WrongStrongPass12345678!").
-					Return("", models.NewWrongPassword())
+					Return("", models.NewWrongPassword("existinguser"))
 			},
 			expectedStatus: http.StatusUnauthorized,
-			expectedErr:    models.NewWrongPassword(),
+			expectedErr:    models.NewWrongPassword("existinguser"),
 		},
 	}
 
@@ -314,4 +316,31 @@ func TestHandler_Login(t *testing.T) {
 		})
 	}
 
+}
+
+func TestHelper_mapErrToHttpStatus(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	h := NewHandler(NewMockService(ctrl), logger.NewNoop())
+
+	var TestErrCode models.ErrorCode = "test_code"
+	httpStatus := h.mapErrToHttpStatus(t.Context(), TestErrCode)
+	if httpStatus != http.StatusInternalServerError {
+		t.Errorf("expected httpStatus %d, got %d", http.StatusInternalServerError, httpStatus)
+	}
+}
+
+func TestHelper_sendJSON(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	h := NewHandler(NewMockService(ctrl), logger.NewNoop())
+
+	rec := httptest.NewRecorder()
+
+	ch := make(chan int)
+	h.sendJSON(context.Background(), rec, http.StatusOK, ch)
+
+	assert.Equal(t, http.StatusInternalServerError, rec.Result().StatusCode)
 }
