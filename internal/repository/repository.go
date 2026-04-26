@@ -15,8 +15,10 @@ type Repository struct {
 	pool *pgxpool.Pool
 }
 
-func NewRepository() *Repository {
-	return &Repository{}
+func NewRepository(pool *pgxpool.Pool) *Repository {
+	return &Repository{
+		pool: pool,
+	}
 }
 
 func (r *Repository) CreateUser(ctx context.Context, login string, password string) error {

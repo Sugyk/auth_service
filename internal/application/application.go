@@ -110,7 +110,7 @@ func (a *Application) InitDB(ctx context.Context) error {
 }
 
 func (a *Application) InitRepository() error {
-	a.repository = repository.NewRepository()
+	a.repository = repository.NewRepository(a.db.DB())
 
 	return nil
 }
