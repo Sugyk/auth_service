@@ -15,6 +15,8 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
+var SERVICE_PREFIX = "/api/v1/auth"
+
 func TestHandler_Register(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -118,7 +120,7 @@ func TestHandler_Register(t *testing.T) {
 				}
 			}
 
-			req := httptest.NewRequest(http.MethodPost, "/register", bytes.NewReader(body))
+			req := httptest.NewRequest(http.MethodPost, SERVICE_PREFIX+"/register", bytes.NewReader(body))
 			req.Header.Set("Content-Type", "application/json")
 
 			rr := httptest.NewRecorder()
@@ -278,7 +280,7 @@ func TestHandler_Login(t *testing.T) {
 				}
 			}
 
-			req := httptest.NewRequest(http.MethodPost, "/login", bytes.NewReader(body))
+			req := httptest.NewRequest(http.MethodPost, SERVICE_PREFIX+"/login", bytes.NewReader(body))
 			req.Header.Set("Content-Type", "application/json")
 
 			rr := httptest.NewRecorder()

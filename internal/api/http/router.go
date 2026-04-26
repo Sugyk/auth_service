@@ -19,8 +19,8 @@ func NewRouter(handler Handler) *Router {
 	mux := http.NewServeMux()
 
 	// Routes
-	mux.HandleFunc("POST /reg", handler.Register)
-	mux.HandleFunc("POST /login", handler.Login)
+	mux.HandleFunc("POST /api/v1/auth/reg", handler.Register)
+	mux.HandleFunc("POST /api/v1/auth/login", handler.Login)
 	//
 
 	server := &http.Server{
