@@ -8,6 +8,7 @@ import (
 
 type Handler interface {
 	Register(w http.ResponseWriter, r *http.Request)
+	Login(w http.ResponseWriter, r *http.Request)
 }
 
 type Router struct {
@@ -19,6 +20,7 @@ func NewRouter(handler Handler) *Router {
 
 	// Routes
 	mux.HandleFunc("POST /reg", handler.Register)
+	mux.HandleFunc("POST /login", handler.Login)
 	//
 
 	server := &http.Server{
