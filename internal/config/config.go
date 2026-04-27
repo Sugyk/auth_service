@@ -10,7 +10,7 @@ import (
 
 // LoadConfig загружает конфигурацию
 // Сначала пытается прочитать yaml-файл, если его нет — читает из переменных окружения
-func LoadConfig() (*PgConfig, *HasherConfig, error) {
+func LoadConfig() (*AppConfig, error) {
 	// Поддержка .env файла (удобно для разработки)
 	_ = godotenv.Load()
 
@@ -41,7 +41,7 @@ func LoadConfig() (*PgConfig, *HasherConfig, error) {
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
 			// Это другая ошибка (неправильный yaml и т.д.) — возвращаем
-			return nil, nil, fmt.Errorf("error reading config file: %w", err)
+			return nil, fmt.Errorf("error reading config file: %w", err)
 		}
 		// Файл не найден — это нормально, будем читать только из ENV
 		fmt.Println("Config file not found, using environment variables only")
@@ -64,13 +64,18 @@ func LoadConfig() (*PgConfig, *HasherConfig, error) {
 
 	// Валидация обязательных полей
 	if pgConfig.ConnStr == "" {
-		return nil, nil, fmt.Errorf("PG_CONNSTR (or pg.connstr in yaml) is required")
+		return nil, fmt.Errorf("PG_CONNSTR (or pg.connstr in yaml) is required")
 	}
 
 	// Установка разумных значений по умолчанию, если не указаны
 	setDefaults(pgConfig, hasherConfig)
 
-	return pgConfig, hasherConfig, nil
+	appConfig := &AppConfig{
+		DBCfg:     pgConfig,
+		HasherCfg: hasherConfig,
+	}
+
+	return appConfig, nil
 }
 
 // setDefaults устанавливает разумные значения по умолчанию

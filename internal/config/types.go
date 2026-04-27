@@ -1,5 +1,10 @@
 package config
 
+type AppConfig struct {
+	DBCfg     *PgConfig
+	HasherCfg *HasherConfig
+}
+
 // Config with postgres connection params
 type PgConfig struct {
 	ConnStr         string

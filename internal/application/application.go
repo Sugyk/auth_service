@@ -25,8 +25,7 @@ type Application struct {
 	logger logger.Logger
 	db     *postgres.Provider
 
-	dbCfg     *config.PgConfig
-	hasherCfg *config.HasherConfig
+	cfg *config.AppConfig
 
 	repository *repository.Repository
 
@@ -80,13 +79,12 @@ func (a *Application) InitLogger(level string) error {
 }
 
 func (a *Application) LoadConfigs() error {
-	dbCfg, hasherCfg, err := config.LoadConfig()
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
 	}
 
-	a.dbCfg = dbCfg
-	a.hasherCfg = hasherCfg
+	a.cfg = cfg
 
 	return nil
 }
@@ -94,11 +92,11 @@ func (a *Application) LoadConfigs() error {
 func (a *Application) InitDB(ctx context.Context) error {
 	provider := postgres.NewProvider(
 		a.logger,
-		a.dbCfg.ConnStr,
-		a.dbCfg.MaxConns,
-		a.dbCfg.MinConns,
-		a.dbCfg.MaxConnLifetime,
-		a.dbCfg.MaxConnIdleTime,
+		a.cfg.DBCfg.ConnStr,
+		a.cfg.DBCfg.MaxConns,
+		a.cfg.DBCfg.MinConns,
+		a.cfg.DBCfg.MaxConnLifetime,
+		a.cfg.DBCfg.MaxConnIdleTime,
 	)
 	if err := provider.Open(ctx); err != nil {
 		return err
@@ -117,7 +115,7 @@ func (a *Application) InitRepository() error {
 
 func (a *Application) InitService() error {
 	txManager := postgres.NewTxManager(a.db.DB())
-	passwordHasher := hasher.NewPasswordHasher(a.hasherCfg.Cost)
+	passwordHasher := hasher.NewPasswordHasher(a.cfg.HasherCfg.Cost)
 
 	a.service = service.NewService(
 		a.repository,
