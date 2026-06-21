@@ -41,4 +41,4 @@ services:
       - ../../:/app
     working_dir: /app
     # command: cat /app/config/config.yaml
-    command: go test ./tests/... -v
+    command: sh -c "go test ./tests/... -v -coverprofile=/app/coverage_integration.out -coverpkg=github.com/Sugyk/auth_service/... && go tool cover -func=/app/coverage_integration.out"
