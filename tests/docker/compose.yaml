@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: test-auth-service-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  migrate:
+    image: migrate/migrate:4
+    container_name: test-auth-service-migrate
+    volumes:
+      - ../../internal/migrations:/migrations
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: [
+      "-path", "/migrations",
+      "-database", "postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable",
+      "up"
+    ]
+    restart: "no"
+
+  service:
+    image: golang:1.25.3-alpine3.22
+    container_name: test-auth_service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - ../../:/app
+    working_dir: /app
+    # command: cat /app/config/config.yaml
+    command: go test ./tests/... -v

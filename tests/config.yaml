@@ -1,0 +1,9 @@
+pg:
+  connstr: "postgres://postgres:postgres@postgres/postgres?sslmode=disable"
+  maxconns: 30
+  minconns: 5
+  maxconnlifetime: 1800   # seconds
+  maxconnidletime: 300
+
+hasher:
+  cost: 12
