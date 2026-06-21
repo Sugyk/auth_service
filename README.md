@@ -1,4 +1,4 @@
 ## Problems
 
-* **Tests with txmanager can be used only happy paths.** TestTxManager does not commit nothing, so tests with tx can not be used when several transaction used in service, especially when they are work with the same data, because tests can not rollback and test dab cases.
+* **Tests with txmanager can be used only happy paths.** TestTxManager does not commit nothing, so tests with tx can not be used when several transaction used in service, especially when they are work with the same data, because tests can not rollback and test bad cases.
 
