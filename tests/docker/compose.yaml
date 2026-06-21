@@ -28,17 +28,3 @@ services:
       "up"
     ]
     restart: "no"
-
-  service:
-    image: golang:1.25.3-alpine3.22
-    container_name: test-auth_service
-    depends_on:
-      postgres:
-        condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
-    volumes:
-      - ../../:/app
-    working_dir: /app
-    # command: cat /app/config/config.yaml
-    command: sh -c "go test ./tests/... -v -coverprofile=/app/coverage_integration.out -coverpkg=github.com/Sugyk/auth_service/... && go tool cover -func=/app/coverage_integration.out"

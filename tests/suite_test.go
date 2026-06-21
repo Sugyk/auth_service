@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/Sugyk/auth_service/internal/api/http/handlers"
 	"github.com/Sugyk/auth_service/internal/config"
@@ -80,7 +81,13 @@ func (s *IntegrationSuite) SetupSuite() {
 		cfg.DBCfg.MaxConnIdleTime,
 	)
 
-	err = pgProvider.Open(s.T().Context())
+	for range 10 {
+		err = pgProvider.Open(s.T().Context())
+		if err != nil {
+			time.Sleep(2 * time.Second)
+		}
+	}
+
 	s.Require().NoError(err)
 
 	s.db = pgProvider.DB()
