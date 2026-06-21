@@ -69,3 +69,18 @@ func GetExecutor(ctx context.Context, db *pgxpool.Pool) Executor {
 	}
 	return db
 }
+
+type testTxManager struct {
+	tx pgx.Tx
+}
+
+func (t *testTxManager) WithTx(ctx context.Context, fn func(context.Context) error) error {
+	txCtx := context.WithValue(ctx, txKey{}, t.tx)
+	return fn(txCtx)
+}
+
+func NewTestTxManager(tx pgx.Tx) TxManager {
+	return &testTxManager{
+		tx: tx,
+	}
+}
