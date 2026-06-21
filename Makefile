@@ -6,7 +6,7 @@ unit:
 
 integration:
 	docker compose -f ./tests/docker/compose.yaml up -d
-	go test ./tests/... -coverprofile=coverage_integrational.out -coverpkg=github.com/Sugyk/auth_service/...
+	go test ./tests/... -coverprofile=coverage_integration.out -coverpkg=github.com/Sugyk/auth_service/...
 	docker compose -f ./tests/docker/compose.yaml down
 
 cover:
