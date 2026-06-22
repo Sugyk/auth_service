@@ -4,7 +4,6 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -33,12 +32,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var reqBody models.RegisterRequest
-
-	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		h.handleError(ctx, w, models.NewValidationErr("error decoding body"))
-		return
-	}
-	if err := reqBody.Validate(); err != nil {
+	if err := h.readRequestBody(r, &reqBody); err != nil {
 		h.handleError(ctx, w, err)
 		return
 	}
@@ -60,12 +54,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var reqBody models.LoginRequest
-
-	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		h.handleError(ctx, w, models.NewValidationErr("error decoding body"))
-		return
-	}
-	if err := reqBody.Validate(); err != nil {
+	if err := h.readRequestBody(r, &reqBody); err != nil {
 		h.handleError(ctx, w, err)
 		return
 	}
