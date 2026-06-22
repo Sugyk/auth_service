@@ -6,8 +6,6 @@ import (
 	"fmt"
 
 	"github.com/Sugyk/auth_service/internal/models"
-	"github.com/Sugyk/auth_service/internal/pkg/hasher"
-	"github.com/Sugyk/auth_service/internal/pkg/jwt_manager"
 )
 
 type Repository interface {
@@ -15,18 +13,27 @@ type Repository interface {
 	GetPasswordByLogin(ctx context.Context, login string) (string, error)
 }
 
+type JWTManager interface {
+	CreateJWT(login string) (string, error)
+}
+
 type TxManager interface {
 	WithTx(ctx context.Context, fn func(ctx context.Context) error) error
+}
+
+type PasswordHasher interface {
+	HashPassword(password string) (string, error)
+	CompareHashAndPassword(password string, passwordHash string) bool
 }
 
 type Service struct {
 	txManager  TxManager
 	repo       Repository
-	hasher     hasher.PasswordHasher
-	jwtManager jwt_manager.JWTManager
+	hasher     PasswordHasher
+	jwtManager JWTManager
 }
 
-func NewService(repo Repository, txManager TxManager, hasher hasher.PasswordHasher) *Service {
+func NewService(repo Repository, txManager TxManager, hasher PasswordHasher) *Service {
 	return &Service{
 		txManager: txManager,
 		repo:      repo,

@@ -7,10 +7,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type JWTManager interface {
-	CreateJWT(login string) (string, error)
-}
-
 type jwtManager struct {
 	secret []byte
 	ttl    time.Duration
@@ -34,7 +30,7 @@ func (j *jwtManager) CreateJWT(login string) (string, error) {
 	return tokenString, nil
 }
 
-func NewJWTManager(secret []byte, ttl time.Duration) (JWTManager, error) {
+func NewJWTManager(secret []byte, ttl time.Duration) (*jwtManager, error) {
 	if secret == nil {
 		return nil, fmt.Errorf("secret for JWTManager can not be empty")
 	}

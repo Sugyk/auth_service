@@ -4,16 +4,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type PasswordHasher interface {
-	HashPassword(password string) (string, error)
-	CompareHashAndPassword(password string, passwordHash string) bool
-}
-
 type passwordHasher struct {
 	cost int
 }
 
-func NewPasswordHasher(cost int) PasswordHasher {
+func NewPasswordHasher(cost int) *passwordHasher {
 	return &passwordHasher{
 		cost: cost,
 	}
