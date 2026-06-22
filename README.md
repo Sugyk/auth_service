@@ -1,4 +1,4 @@
-[![Coverage](https://coveralls.io/repos/github/Sugyk/auth_service/badge.svg?branch=master&flag=unit)](https://coveralls.io/github/Sugyk/auth_service)
+[![Coverage](https://coveralls.io/repos/github/Sugyk/auth_service/badge.svg?branch=master)](https://coveralls.io/github/Sugyk/auth_service)
 
 ## Problems
 
