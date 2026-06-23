@@ -1,5 +1,8 @@
 run:
+	docker image prune -f
+	docker compose build
 	docker compose up
+	docker compose down
 
 unit:
 	go test ./internal/... -coverprofile=coverage_unit.out -coverpkg=github.com/Sugyk/auth_service/...
