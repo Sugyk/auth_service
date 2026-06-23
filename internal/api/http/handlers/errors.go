@@ -30,11 +30,10 @@ func (h *Handler) mapErrToHttpStatus(ctx context.Context, errCode models.ErrorCo
 func (h *Handler) handleError(ctx context.Context, w http.ResponseWriter, err error) {
 	appErr, ok := models.AsAppError(err)
 	if !ok {
-		h.logger.Error(ctx, "internal error", "error", err.Error())
-		h.sendJSON(ctx, w, http.StatusInternalServerError, models.NewInternalErr(err.Error()))
-		return
+		appErr = models.NewInternalErr(err.Error())
 	}
 
+	h.logger.Error(ctx, "request error", "error", appErr.Error(), "cause", appErr.Cause())
 	httpStatus := h.mapErrToHttpStatus(ctx, appErr.ErrCode)
 
 	h.sendJSON(ctx, w, httpStatus, appErr)
