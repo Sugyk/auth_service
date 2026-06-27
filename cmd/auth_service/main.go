@@ -7,13 +7,9 @@ import (
 	"github.com/Sugyk/auth_service/internal/application"
 )
 
-// @title           Название API
+// @title           Auth_service API
 // @version         1.0.0
-// @description     Описание вашего API. Можно многострочное.
-
-// @contact.name    Имя контактного лица
-// @contact.url     https://example.com/support
-// @contact.email   support@example.com
+// @description     This service provide API for using JWT authentification in your service.
 
 // @license.name    MIT
 // @license.url     https://opensource.org/licenses/MIT
