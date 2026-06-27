@@ -7,3 +7,6 @@ pg:
 
 hasher:
   cost: 12
+
+jwt:
+  ttl: 15m
