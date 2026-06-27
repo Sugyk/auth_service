@@ -102,7 +102,7 @@ func (s *IntegrationSuite) TestRegister() {
 		s.Run(tc.name, func() {
 			resp := s.PerformRequest(
 				http.MethodPost,
-				ServicePrefix+"/register",
+				ServicePrefix+"/reg",
 				tc.req,
 				s.handler.Register,
 			)
