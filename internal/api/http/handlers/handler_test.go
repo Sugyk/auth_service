@@ -120,7 +120,7 @@ func TestHandler_Register(t *testing.T) {
 				}
 			}
 
-			req := httptest.NewRequest(http.MethodPost, SERVICE_PREFIX+"/register", bytes.NewReader(body))
+			req := httptest.NewRequest(http.MethodPost, SERVICE_PREFIX+"/reg", bytes.NewReader(body))
 			req.Header.Set("Content-Type", "application/json")
 
 			rr := httptest.NewRecorder()
