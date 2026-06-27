@@ -44,7 +44,7 @@ func (r *Repository) GetPasswordByLogin(ctx context.Context, login string) (stri
 	exec := postgres.GetExecutor(ctx, r.pool)
 
 	query := `
-		SELECT * FROM Users
+		SELECT password_hash FROM Users
 		WHERE login = $1
 	`
 
@@ -53,8 +53,11 @@ func (r *Repository) GetPasswordByLogin(ctx context.Context, login string) (stri
 	var passHash string
 
 	err := row.Scan(&passHash)
-	if err != nil && errors.Is(err, pgx.ErrNoRows) {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return "", models.ErrLoginNotFound
+	}
+	if err != nil {
+		return "", err
 	}
 
 	return passHash, nil
