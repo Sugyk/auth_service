@@ -33,11 +33,12 @@ type Service struct {
 	jwtManager JWTManager
 }
 
-func NewService(repo Repository, txManager TxManager, hasher PasswordHasher) *Service {
+func NewService(repo Repository, txManager TxManager, hasher PasswordHasher, jwtManager JWTManager) *Service {
 	return &Service{
-		txManager: txManager,
-		repo:      repo,
-		hasher:    hasher,
+		txManager:  txManager,
+		repo:       repo,
+		hasher:     hasher,
+		jwtManager: jwtManager,
 	}
 }
 
