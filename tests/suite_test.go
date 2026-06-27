@@ -85,6 +85,8 @@ func (s *IntegrationSuite) SetupSuite() {
 		err = pgProvider.Open(s.T().Context())
 		if err != nil {
 			time.Sleep(2 * time.Second)
+		} else {
+			break
 		}
 	}
 

@@ -1,8 +1,11 @@
 package config
 
+import "time"
+
 type AppConfig struct {
 	DBCfg     *PgConfig
 	HasherCfg *HasherConfig
+	JWTConfig *JWTConfig
 }
 
 // Config with postgres connection params
@@ -16,4 +19,9 @@ type PgConfig struct {
 
 type HasherConfig struct {
 	Cost int
+}
+
+type JWTConfig struct {
+	TTL    time.Duration
+	Secret string
 }

@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/joho/godotenv"
@@ -17,11 +18,11 @@ func LoadConfig() (*AppConfig, error) {
 	v := viper.New()
 
 	// Настройка для YAML
-	v.SetConfigName("config") // имя файла без расширения
+	v.SetConfigName("config")
 	v.SetConfigType("yaml")
-	v.AddConfigPath(".")            // текущая директория
-	v.AddConfigPath("./config")     // папка config
-	v.AddConfigPath("./app/config") // часто используют configs (мн.ч.)
+	v.AddConfigPath(".")
+	v.AddConfigPath("./config")
+	v.AddConfigPath("./app/config")
 	v.AddConfigPath(filepath.Join(".", "config"))
 
 	// Автоматическое приведение имён переменных окружения
@@ -37,19 +38,17 @@ func LoadConfig() (*AppConfig, error) {
 
 	v.BindEnv("hasher.cost", "HASHER_COST")
 
-	// Читаем конфиг файл (если он существует)
+	v.BindEnv("jwt.ttl", "JWT_TTL")
+
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			// Это другая ошибка (неправильный yaml и т.д.) — возвращаем
 			return nil, fmt.Errorf("error reading config file: %w", err)
 		}
-		// Файл не найден — это нормально, будем читать только из ENV
 		fmt.Println("Config file not found, using environment variables only")
 	} else {
 		fmt.Printf("Config loaded from file: %s\n", v.ConfigFileUsed())
 	}
 
-	// Заполняем структуры
 	pgConfig := &PgConfig{
 		ConnStr:         v.GetString("pg.connstr"),
 		MaxConns:        v.GetInt32("pg.maxconns"),
@@ -62,23 +61,26 @@ func LoadConfig() (*AppConfig, error) {
 		Cost: v.GetInt("hasher.cost"),
 	}
 
-	// Валидация обязательных полей
+	jwtConfig := &JWTConfig{
+		Secret: os.Getenv("JWT_SECRET"),
+		TTL:    v.GetDuration("jwt.ttl"),
+	}
+
 	if pgConfig.ConnStr == "" {
 		return nil, fmt.Errorf("PG_CONNSTR (or pg.connstr in yaml) is required")
 	}
 
-	// Установка разумных значений по умолчанию, если не указаны
 	setDefaults(pgConfig, hasherConfig)
 
 	appConfig := &AppConfig{
 		DBCfg:     pgConfig,
 		HasherCfg: hasherConfig,
+		JWTConfig: jwtConfig,
 	}
 
 	return appConfig, nil
 }
 
-// setDefaults устанавливает разумные значения по умолчанию
 func setDefaults(pg *PgConfig, hasher *HasherConfig) {
 	if pg.MaxConns <= 0 {
 		pg.MaxConns = 25
