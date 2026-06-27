@@ -11,6 +11,7 @@ import (
 	"github.com/Sugyk/auth_service/internal/api/http/handlers"
 	"github.com/Sugyk/auth_service/internal/config"
 	"github.com/Sugyk/auth_service/internal/pkg/hasher"
+	"github.com/Sugyk/auth_service/internal/pkg/jwt_manager"
 	"github.com/Sugyk/auth_service/internal/repository"
 	"github.com/Sugyk/auth_service/internal/service"
 	"github.com/Sugyk/auth_service/pkg/logger"
@@ -103,6 +104,12 @@ func (s *IntegrationSuite) SetupTest() {
 
 	txManager := postgres.NewTestTxManager(tx)
 
+	jwtManager, err := jwt_manager.NewJWTManager(
+		[]byte(s.cfg.JWTConfig.Secret),
+		s.cfg.JWTConfig.TTL,
+	)
+	s.Require().NoError(err)
+
 	repo := repository.NewRepository(s.db)
 
 	passwordHasher := hasher.NewPasswordHasher(
@@ -113,6 +120,7 @@ func (s *IntegrationSuite) SetupTest() {
 		repo,
 		txManager,
 		passwordHasher,
+		jwtManager,
 	)
 
 	s.handler = handlers.NewHandler(
