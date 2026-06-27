@@ -97,7 +97,9 @@ func (s *IntegrationSuite) SetupSuite() {
 }
 
 func (s *IntegrationSuite) SetupTest() {
-	tx, err := s.db.Begin(s.T().Context())
+	tx, err := s.db.BeginTx(s.T().Context(), pgx.TxOptions{
+		IsoLevel: pgx.Serializable,
+	})
 	s.Require().NoError(err)
 
 	s.tx = tx
