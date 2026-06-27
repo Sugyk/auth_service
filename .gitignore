@@ -1,2 +1,3 @@
 coverage_unit.out
 coverage_integration.out
+.env
