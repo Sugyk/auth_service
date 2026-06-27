@@ -12,6 +12,7 @@ import (
 	"github.com/Sugyk/auth_service/internal/api/http/handlers"
 	"github.com/Sugyk/auth_service/internal/config"
 	"github.com/Sugyk/auth_service/internal/pkg/hasher"
+	"github.com/Sugyk/auth_service/internal/pkg/jwt_manager"
 	"github.com/Sugyk/auth_service/internal/repository"
 	"github.com/Sugyk/auth_service/internal/service"
 	"github.com/Sugyk/auth_service/pkg/logger"
@@ -116,11 +117,19 @@ func (a *Application) InitRepository() error {
 func (a *Application) InitService() error {
 	txManager := postgres.NewTxManager(a.db.DB())
 	passwordHasher := hasher.NewPasswordHasher(a.cfg.HasherCfg.Cost)
+	jwtManager, err := jwt_manager.NewJWTManager(
+		[]byte(a.cfg.JWTConfig.Secret),
+		a.cfg.JWTConfig.TTL,
+	)
+	if err != nil {
+		return err
+	}
 
 	a.service = service.NewService(
 		a.repository,
 		txManager,
 		passwordHasher,
+		jwtManager,
 	)
 
 	return nil
