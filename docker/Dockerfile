@@ -51,6 +51,7 @@ USER app
 
 # Expose ports
 EXPOSE 8080
+EXPOSE 50051
 
 # Run the application
 CMD ["/app/app"]
