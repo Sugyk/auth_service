@@ -12,6 +12,7 @@ HTTP-сервис аутентификации пользователей на G
 
 - Регистрация пользователя с хешированием пароля (bcrypt, cost = 12)
 - Аутентификация и выдача подписанного JWT-токена
+- HTTP и gRPC API поверх одной и той же бизнес-логики (транспорты не дублируют её)
 - Настраиваемый TTL токена
 - Управление пулом соединений с PostgreSQL (pgx v5)
 - Автоматические миграции при старте через `migrate`
@@ -26,6 +27,7 @@ HTTP-сервис аутентификации пользователей на G
 | Язык | Go 1.25 |
 | База данных | PostgreSQL 16 |
 | Драйвер БД | [pgx/v5](https://github.com/jackc/pgx) |
+| gRPC | [grpc-go](https://github.com/grpc/grpc-go) + Protocol Buffers |
 | JWT | [golang-jwt/jwt v5](https://github.com/golang-jwt/jwt) |
 | Хеширование | bcrypt (`golang.org/x/crypto`) |
 | Конфигурация | [Viper](https://github.com/spf13/viper) + godotenv |
@@ -42,18 +44,20 @@ HTTP-сервис аутентификации пользователей на G
 auth_service/
 ├── cmd/auth_service/     # точка входа, сборка зависимостей (DI)
 ├── internal/
-│   ├── handler/          # HTTP-обработчики
+│   ├── api/http/handler/ # HTTP-обработчики
+│   ├── api/grpc/         # gRPC-сервер (тот же service-слой, что и у HTTP)
 │   ├── service/          # бизнес-логика
 │   ├── repository/       # работа с БД
 │   ├── migrations/       # SQL-миграции
 │   └── ...
 ├── pkg/                  # переиспользуемые пакеты (txmanager, hasher, jwt)
+├── proto/                # protobuf-контракт gRPC API
 ├── config/               # config.yaml
 ├── tests/                # интеграционные тесты
 └── docker/               # Dockerfile
 ```
 
-Сервис следует трёхслойной архитектуре `handler → service → repository`. Каждый слой работает через интерфейс — это позволяет подменять реализации в тестах через моки (go.uber.org/mock).
+Сервис следует трёхслойной архитектуре `handler → service → repository`. Каждый слой работает через интерфейс — это позволяет подменять реализации в тестах через моки (go.uber.org/mock). HTTP- и gRPC-серверы — два независимых транспорта поверх одного и того же `service.Service`.
 
 ---
 
@@ -91,6 +95,7 @@ cp .env.example .env
 | `APP_HASHER_COST` | Стоимость bcrypt (рекомендуется ≥ 12) | `12` |
 | `JWT_SECRET` | Секретный ключ для подписи токенов | `your-secret-key` |
 | `APP_JWT_TTL` | Время жизни JWT-токена | `24h` |
+| `APP_GRPC_ADDR` | Адрес, на котором слушает gRPC-сервер | `:50051` |
 
 > ⚠️ Никогда не коммитьте `.env` с реальными значениями. В production `JWT_SECRET` должен быть не менее 32 символов и храниться в секрет-менеджере (Vault, AWS SSM и т.д.).
 
@@ -139,6 +144,41 @@ cp .env.example .env
 ```
 
 Токен необходимо передавать в заголовке `Authorization: Bearer <token>` для защищённых эндпоинтов.
+
+---
+
+## gRPC API
+
+Помимо HTTP, сервис поднимает gRPC-сервер на отдельном порту (по умолчанию `:50051`, настраивается через `APP_GRPC_ADDR` / `grpc.addr` в `config.yaml`). Это тот же `service.Service`, что и у HTTP-хендлеров — бизнес-логика не дублируется, отличается только транспорт.
+
+Контракт описан в [`proto/auth.proto`](proto/auth.proto) — сервис `auth.v1.AuthService` с двумя RPC: `Register` и `Login`. После изменения `.proto` перегенерировать стабы: `make proto`.
+
+Сервер регистрирует [server reflection](https://github.com/grpc/grpc/blob/master/doc/server-reflection.md) и стандартный [health-checking протокол](https://github.com/grpc/grpc/blob/master/doc/health-checking.md), поэтому его можно опрашивать через [`grpcurl`](https://github.com/fullstorydev/grpcurl) без локальной копии `.proto`:
+
+```bash
+# список сервисов
+grpcurl -plaintext localhost:50051 list
+
+# health-check
+grpcurl -plaintext localhost:50051 grpc.health.v1.Health/Check
+
+# регистрация
+grpcurl -plaintext -d '{"login":"john","password":"StrongPass12345678!"}' \
+  localhost:50051 auth.v1.AuthService/Register
+
+# логин
+grpcurl -plaintext -d '{"login":"john","password":"StrongPass12345678!"}' \
+  localhost:50051 auth.v1.AuthService/Login
+```
+
+Ошибки возвращаются как стандартные gRPC status-коды, а не HTTP-статусы:
+
+| `models.ErrorCode` | gRPC `codes.Code` |
+|---|---|
+| `CodeValidationError` | `InvalidArgument` |
+| `CodeErrDuplicate` | `AlreadyExists` |
+| `CodeWrongCredentials` | `Unauthenticated` |
+| `CodeInternalError` | `Internal` |
 
 ---
 
