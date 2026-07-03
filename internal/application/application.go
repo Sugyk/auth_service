@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	grpc_api "github.com/Sugyk/auth_service/internal/api/grpc"
 	http_api "github.com/Sugyk/auth_service/internal/api/http"
 	"github.com/Sugyk/auth_service/internal/api/http/handlers"
 	"github.com/Sugyk/auth_service/internal/config"
@@ -34,7 +35,8 @@ type Application struct {
 
 	handler *handlers.Handler
 
-	router *http_api.Router
+	router     *http_api.Router
+	grpcRouter *grpc_api.Router
 }
 
 func (a *Application) Init(ctx context.Context) {
@@ -65,6 +67,10 @@ func (a *Application) Init(ctx context.Context) {
 	// Init Router
 	if err := a.InitRouter(); err != nil {
 		log.Fatalln("Init application router error:", err)
+	}
+	// Init gRPC server
+	if err := a.InitGRPCServer(); err != nil {
+		log.Fatalln("Init application gRPC server error:", err)
 	}
 	a.logger.Info(ctx, "App initialisation completed successfully")
 }
@@ -147,13 +153,30 @@ func (a *Application) InitRouter() error {
 	return nil
 }
 
+func (a *Application) InitGRPCServer() error {
+	authServer := grpc_api.NewServer(a.service, a.logger)
+
+	router, err := grpc_api.NewRouter(a.cfg.GRPCConfig.Addr, authServer)
+	if err != nil {
+		return err
+	}
+
+	a.grpcRouter = router
+
+	return nil
+}
+
 func (a *Application) Start(ctx context.Context) error {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-	errchan := make(chan error, 1)
+	errchan := make(chan error, 2)
 
 	go func() {
 		errchan <- a.router.Start()
+	}()
+
+	go func() {
+		errchan <- a.grpcRouter.Start()
 	}()
 
 	var err error
@@ -171,9 +194,15 @@ func (a *Application) Shutdown(ctx context.Context) {
 	a.logger.Info(ctx, "starting gracefull shutdown")
 
 	if err := a.router.Shutdown(ctx); err != nil {
-		a.logger.Info(ctx, "server closed with error", "error", err)
+		a.logger.Info(ctx, "http server closed with error", "error", err)
 	} else {
-		a.logger.Info(ctx, "server closed with no errors")
+		a.logger.Info(ctx, "http server closed with no errors")
+	}
+
+	if err := a.grpcRouter.Shutdown(ctx); err != nil {
+		a.logger.Info(ctx, "grpc server closed with error", "error", err)
+	} else {
+		a.logger.Info(ctx, "grpc server closed with no errors")
 	}
 
 	a.db.Close()
