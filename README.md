@@ -103,47 +103,64 @@ cp .env.example .env
 
 ## API
 
-Сервис доступен на `http://localhost:8080`.
+Сервис доступен на `http://localhost:8080/api/v1`.
 
-### `POST /register`
+### `POST /auth/reg`
 
-Регистрация нового пользователя.
+Регистрация нового пользователя. Пароль должен содержать не менее 16 символов.
 
 **Тело запроса:**
 ```json
 {
-  "username": "john",
-  "password": "secret123"
+  "login": "john",
+  "password": "StrongPass12345678!"
 }
 ```
 
-**Ответ `200 OK`:**
+**Ответ `201 Created`:**
 ```json
 {
-  "id": "uuid"
+  "message": "user with login 'john' created"
 }
 ```
 
-### `POST /login`
+### `POST /auth/login`
 
 Аутентификация и получение JWT-токена.
 
 **Тело запроса:**
 ```json
 {
-  "username": "john",
-  "password": "secret123"
+  "login": "john",
+  "password": "StrongPass12345678!"
 }
 ```
 
 **Ответ `200 OK`:**
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
 
 Токен необходимо передавать в заголовке `Authorization: Bearer <token>` для защищённых эндпоинтов.
+
+### Ошибки
+
+Ошибки возвращаются в едином формате:
+```json
+{
+  "error": "Wrong credentials",
+  "details": "There is incorrect login or password"
+}
+```
+
+| `error` | HTTP-статус |
+|---|---|
+| `Validation error` | `400 Bad Request` |
+| `Wrong credentials` | `401 Unauthorized` |
+| `Duplicate login` | `409 Conflict` |
+| `Internal error` | `500 Internal Server Error` |
 
 ---
 
