@@ -1,0 +1,199 @@
+{
+    "schemes": [
+        "http",
+        "https"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "This service provide API for using JWT authentification in your service.",
+        "title": "Auth_service API",
+        "contact": {},
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        },
+        "version": "1.0.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/api/v1",
+    "paths": {
+        "/auth/login": {
+            "post": {
+                "description": "Authenticates a user and returns a signed JWT access token.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Log in",
+                "parameters": [
+                    {
+                        "description": "Login payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Sugyk_auth_service_internal_models.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Sugyk_auth_service_internal_models.LoginResponse200"
+                        }
+                    },
+                    "400": {
+                        "description": "validation error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Sugyk_auth_service_internal_models.AppError"
+                        }
+                    },
+                    "401": {
+                        "description": "incorrect login or password",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Sugyk_auth_service_internal_models.AppError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Sugyk_auth_service_internal_models.AppError"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/reg": {
+            "post": {
+                "description": "Creates a user with the given login and password. Password must be 16+ characters.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Register a new user",
+                "parameters": [
+                    {
+                        "description": "Registration payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Sugyk_auth_service_internal_models.RegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Sugyk_auth_service_internal_models.RegisterResponse201"
+                        }
+                    },
+                    "400": {
+                        "description": "validation error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Sugyk_auth_service_internal_models.AppError"
+                        }
+                    },
+                    "409": {
+                        "description": "login already exists",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Sugyk_auth_service_internal_models.AppError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Sugyk_auth_service_internal_models.AppError"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "github_com_Sugyk_auth_service_internal_models.AppError": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "string"
+                },
+                "error": {
+                    "$ref": "#/definitions/github_com_Sugyk_auth_service_internal_models.ErrorCode"
+                }
+            }
+        },
+        "github_com_Sugyk_auth_service_internal_models.ErrorCode": {
+            "type": "string",
+            "enum": [
+                "Duplicate login",
+                "Validation error",
+                "Internal error",
+                "Wrong credentials"
+            ],
+            "x-enum-varnames": [
+                "CodeErrDuplicate",
+                "CodeValidationError",
+                "CodeInternalError",
+                "CodeWrongCredentials"
+            ]
+        },
+        "github_com_Sugyk_auth_service_internal_models.LoginRequest": {
+            "type": "object",
+            "properties": {
+                "login": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Sugyk_auth_service_internal_models.LoginResponse200": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Sugyk_auth_service_internal_models.RegisterRequest": {
+            "type": "object",
+            "properties": {
+                "login": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_Sugyk_auth_service_internal_models.RegisterResponse201": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Токен в формате: Bearer \u003ctoken\u003e",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

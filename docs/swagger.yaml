@@ -1,0 +1,134 @@
+basePath: /api/v1
+definitions:
+  github_com_Sugyk_auth_service_internal_models.AppError:
+    properties:
+      details:
+        type: string
+      error:
+        $ref: '#/definitions/github_com_Sugyk_auth_service_internal_models.ErrorCode'
+    type: object
+  github_com_Sugyk_auth_service_internal_models.ErrorCode:
+    enum:
+    - Duplicate login
+    - Validation error
+    - Internal error
+    - Wrong credentials
+    type: string
+    x-enum-varnames:
+    - CodeErrDuplicate
+    - CodeValidationError
+    - CodeInternalError
+    - CodeWrongCredentials
+  github_com_Sugyk_auth_service_internal_models.LoginRequest:
+    properties:
+      login:
+        type: string
+      password:
+        type: string
+    type: object
+  github_com_Sugyk_auth_service_internal_models.LoginResponse200:
+    properties:
+      access_token:
+        type: string
+    type: object
+  github_com_Sugyk_auth_service_internal_models.RegisterRequest:
+    properties:
+      login:
+        type: string
+      password:
+        type: string
+    type: object
+  github_com_Sugyk_auth_service_internal_models.RegisterResponse201:
+    properties:
+      message:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This service provide API for using JWT authentification in your service.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  title: Auth_service API
+  version: 1.0.0
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user and returns a signed JWT access token.
+      parameters:
+      - description: Login payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Sugyk_auth_service_internal_models.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_Sugyk_auth_service_internal_models.LoginResponse200'
+        "400":
+          description: validation error
+          schema:
+            $ref: '#/definitions/github_com_Sugyk_auth_service_internal_models.AppError'
+        "401":
+          description: incorrect login or password
+          schema:
+            $ref: '#/definitions/github_com_Sugyk_auth_service_internal_models.AppError'
+        "500":
+          description: internal error
+          schema:
+            $ref: '#/definitions/github_com_Sugyk_auth_service_internal_models.AppError'
+      summary: Log in
+      tags:
+      - auth
+  /auth/reg:
+    post:
+      consumes:
+      - application/json
+      description: Creates a user with the given login and password. Password must
+        be 16+ characters.
+      parameters:
+      - description: Registration payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_Sugyk_auth_service_internal_models.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_Sugyk_auth_service_internal_models.RegisterResponse201'
+        "400":
+          description: validation error
+          schema:
+            $ref: '#/definitions/github_com_Sugyk_auth_service_internal_models.AppError'
+        "409":
+          description: login already exists
+          schema:
+            $ref: '#/definitions/github_com_Sugyk_auth_service_internal_models.AppError'
+        "500":
+          description: internal error
+          schema:
+            $ref: '#/definitions/github_com_Sugyk_auth_service_internal_models.AppError'
+      summary: Register a new user
+      tags:
+      - auth
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    description: 'Токен в формате: Bearer <token>'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

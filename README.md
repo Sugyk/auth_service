@@ -105,6 +105,12 @@ cp .env.example .env
 
 Сервис доступен на `http://localhost:8080/api/v1`.
 
+Интерактивная Swagger-документация (Swagger UI) доступна на `http://localhost:8080/swagger/index.html`, JSON-спецификация — на `http://localhost:8080/swagger/doc.json`. Аннотации живут в `cmd/auth_service/main.go` (общая информация об API) и в `internal/api/http/handlers/handler.go` (описание конкретных эндпоинтов). После их изменения нужно перегенерировать `docs/`:
+
+```bash
+make swagger
+```
+
 ### `POST /auth/reg`
 
 Регистрация нового пользователя. Пароль должен содержать не менее 16 символов.

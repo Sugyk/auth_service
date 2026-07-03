@@ -1,4 +1,4 @@
-.PHONY: run proto unit integration cover
+.PHONY: run proto swagger unit integration cover
 
 run:
 	docker image prune -f
@@ -11,6 +11,9 @@ proto:
 		--go_out=. --go_opt=module=github.com/Sugyk/auth_service \
 		--go-grpc_out=. --go-grpc_opt=module=github.com/Sugyk/auth_service \
 		proto/auth.proto
+
+swagger:
+	swag init -g cmd/auth_service/main.go -o docs --parseDependency --parseInternal
 
 unit:
 	go test ./internal/... -coverprofile=coverage_unit.out -coverpkg=github.com/Sugyk/auth_service/...

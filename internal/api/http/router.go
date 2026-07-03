@@ -3,6 +3,9 @@ package http_api
 import (
 	"context"
 	"net/http"
+
+	_ "github.com/Sugyk/auth_service/docs"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 type Handler interface {
@@ -20,6 +23,7 @@ func NewRouter(handler Handler) *Router {
 	// Routes
 	mux.HandleFunc("POST /api/v1/auth/reg", handler.Register)
 	mux.HandleFunc("POST /api/v1/auth/login", handler.Login)
+	mux.Handle("/swagger/", httpSwagger.WrapHandler)
 	//
 
 	server := &http.Server{
