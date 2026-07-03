@@ -2,7 +2,6 @@ package http_api
 
 import (
 	"context"
-	"errors"
 	"net/http"
 )
 
@@ -38,9 +37,5 @@ func (r *Router) Start() error {
 }
 
 func (r *Router) Shutdown(ctx context.Context) error {
-	var err error
-	if err = r.server.Shutdown(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		return nil
-	}
-	return err
+	return r.server.Shutdown(ctx)
 }
