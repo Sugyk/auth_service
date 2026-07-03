@@ -1,3 +1,5 @@
+//go:generate mockgen -destination=service_mock.go -source=server.go -package=grpc_api
+
 package grpc_api
 
 import (
