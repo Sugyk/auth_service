@@ -10,3 +10,6 @@ hasher:
 
 jwt:
   ttl: 15m
+
+grpc:
+  addr: ":50051"

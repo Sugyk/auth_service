@@ -3,9 +3,10 @@ package config
 import "time"
 
 type AppConfig struct {
-	DBCfg     *PgConfig
-	HasherCfg *HasherConfig
-	JWTConfig *JWTConfig
+	DBCfg      *PgConfig
+	HasherCfg  *HasherConfig
+	JWTConfig  *JWTConfig
+	GRPCConfig *GRPCConfig
 }
 
 // Config with postgres connection params
@@ -24,4 +25,8 @@ type HasherConfig struct {
 type JWTConfig struct {
 	TTL    time.Duration
 	Secret string
+}
+
+type GRPCConfig struct {
+	Addr string
 }

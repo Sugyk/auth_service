@@ -40,6 +40,8 @@ func LoadConfig() (*AppConfig, error) {
 
 	v.BindEnv("jwt.ttl", "JWT_TTL")
 
+	v.BindEnv("grpc.addr", "GRPC_ADDR")
+
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
 			return nil, fmt.Errorf("error reading config file: %w", err)
@@ -66,22 +68,27 @@ func LoadConfig() (*AppConfig, error) {
 		TTL:    v.GetDuration("jwt.ttl"),
 	}
 
+	grpcConfig := &GRPCConfig{
+		Addr: v.GetString("grpc.addr"),
+	}
+
 	if pgConfig.ConnStr == "" {
 		return nil, fmt.Errorf("PG_CONNSTR (or pg.connstr in yaml) is required")
 	}
 
-	setDefaults(pgConfig, hasherConfig)
+	setDefaults(pgConfig, hasherConfig, grpcConfig)
 
 	appConfig := &AppConfig{
-		DBCfg:     pgConfig,
-		HasherCfg: hasherConfig,
-		JWTConfig: jwtConfig,
+		DBCfg:      pgConfig,
+		HasherCfg:  hasherConfig,
+		JWTConfig:  jwtConfig,
+		GRPCConfig: grpcConfig,
 	}
 
 	return appConfig, nil
 }
 
-func setDefaults(pg *PgConfig, hasher *HasherConfig) {
+func setDefaults(pg *PgConfig, hasher *HasherConfig, grpcCfg *GRPCConfig) {
 	if pg.MaxConns <= 0 {
 		pg.MaxConns = 25
 	}
@@ -96,5 +103,8 @@ func setDefaults(pg *PgConfig, hasher *HasherConfig) {
 	}
 	if hasher.Cost <= 0 {
 		hasher.Cost = 12
+	}
+	if grpcCfg.Addr == "" {
+		grpcCfg.Addr = ":50051"
 	}
 }
