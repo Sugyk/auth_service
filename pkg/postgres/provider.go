@@ -31,8 +31,8 @@ func (p *Provider) Open(ctx context.Context) error {
 
 	poolConfig.MaxConns = p.MaxConns
 	poolConfig.MinConns = p.MinConns
-	poolConfig.MaxConnLifetime = time.Duration(p.MaxConnLifetime) * time.Minute
-	poolConfig.MaxConnIdleTime = time.Duration(p.MaxConnIdleTime) * time.Minute
+	poolConfig.MaxConnLifetime = time.Duration(p.MaxConnLifetime) * time.Second
+	poolConfig.MaxConnIdleTime = time.Duration(p.MaxConnIdleTime) * time.Second
 
 	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
