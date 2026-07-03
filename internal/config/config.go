@@ -25,22 +25,19 @@ func LoadConfig() (*AppConfig, error) {
 	v.AddConfigPath("./app/config")
 	v.AddConfigPath(filepath.Join(".", "config"))
 
-	// Автоматическое приведение имён переменных окружения
-	v.AutomaticEnv()
-	v.SetEnvPrefix("APP") // префикс: APP_PG_CONNSTR, APP_HASHER_COST и т.д.
+	// Настройка маппинга ключей: BindEnv с двумя аргументами берёт имя
+	// переменной окружения как есть, поэтому префикс APP_ указан явно.
+	v.BindEnv("pg.connstr", "APP_PG_CONNSTR")
+	v.BindEnv("pg.maxconns", "APP_PG_MAX_CONNS")
+	v.BindEnv("pg.minconns", "APP_PG_MIN_CONNS")
+	v.BindEnv("pg.maxconnlifetime", "APP_PG_MAX_CONN_LIFETIME")
+	v.BindEnv("pg.maxconnidletime", "APP_PG_MAX_CONN_IDLE_TIME")
 
-	// Настройка маппинга ключей (для удобства)
-	v.BindEnv("pg.connstr", "PG_CONNSTR")
-	v.BindEnv("pg.maxconns", "PG_MAX_CONNS")
-	v.BindEnv("pg.minconns", "PG_MIN_CONNS")
-	v.BindEnv("pg.maxconnlifetime", "PG_MAX_CONN_LIFETIME")
-	v.BindEnv("pg.maxconnidletime", "PG_MAX_CONN_IDLE_TIME")
+	v.BindEnv("hasher.cost", "APP_HASHER_COST")
 
-	v.BindEnv("hasher.cost", "HASHER_COST")
+	v.BindEnv("jwt.ttl", "APP_JWT_TTL")
 
-	v.BindEnv("jwt.ttl", "JWT_TTL")
-
-	v.BindEnv("grpc.addr", "GRPC_ADDR")
+	v.BindEnv("grpc.addr", "APP_GRPC_ADDR")
 
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
