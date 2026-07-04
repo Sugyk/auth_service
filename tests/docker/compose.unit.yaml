@@ -1,0 +1,11 @@
+services:
+  unit:
+    image: golang:1.25
+    working_dir: /app
+    volumes:
+      - ../..:/app
+      - gomodcache:/go/pkg/mod
+    command: go test ./internal/... -coverprofile=coverage_unit.out -coverpkg=github.com/Sugyk/auth_service/...
+
+volumes:
+  gomodcache:

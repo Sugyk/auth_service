@@ -16,7 +16,7 @@ swagger:
 	swag init -g cmd/auth_service/main.go -o docs --parseDependency --parseInternal
 
 unit:
-	go test ./internal/... -coverprofile=coverage_unit.out -coverpkg=github.com/Sugyk/auth_service/...
+	docker compose -f tests/docker/compose.unit.yaml run --rm unit
 
 integration:
 	docker compose -f ./tests/docker/compose.yaml up -d
