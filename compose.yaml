@@ -44,3 +44,26 @@ services:
     volumes:
       - ./config/config.yaml:/app/config.yaml
       - ./internal/migrations:/app/migrations
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: auth-service-prometheus
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    depends_on:
+      - service
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: auth-service-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
