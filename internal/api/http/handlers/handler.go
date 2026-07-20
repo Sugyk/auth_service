@@ -72,6 +72,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 // @Success      200      {object}  models.LoginResponse200
 // @Failure      400      {object}  models.AppError  "validation error"
 // @Failure      401      {object}  models.AppError  "incorrect login or password"
+// @Failure      429      {object}  models.AppError  "too many failed attempts"
 // @Failure      500      {object}  models.AppError  "internal error"
 // @Router       /auth/login [post]
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {

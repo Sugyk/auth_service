@@ -12,6 +12,7 @@ var codeToStatusMap = map[models.ErrorCode]int{
 	models.CodeErrDuplicate:     http.StatusConflict,
 	models.CodeValidationError:  http.StatusBadRequest,
 	models.CodeWrongCredentials: http.StatusUnauthorized,
+	models.CodeTooManyAttempts:  http.StatusTooManyRequests,
 }
 
 func (h *Handler) mapErrToHttpStatus(ctx context.Context, errCode models.ErrorCode) int {
