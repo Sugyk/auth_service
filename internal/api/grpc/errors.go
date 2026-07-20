@@ -11,6 +11,7 @@ var codeToGRPCStatusMap = map[models.ErrorCode]codes.Code{
 	models.CodeErrDuplicate:     codes.AlreadyExists,
 	models.CodeValidationError:  codes.InvalidArgument,
 	models.CodeWrongCredentials: codes.Unauthenticated,
+	models.CodeTooManyAttempts:  codes.ResourceExhausted,
 }
 
 func appErrorFrom(err error) *models.AppError {
