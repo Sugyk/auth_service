@@ -13,12 +13,14 @@ definitions:
     - Validation error
     - Internal error
     - Wrong credentials
+    - Too many attempts
     type: string
     x-enum-varnames:
     - CodeErrDuplicate
     - CodeValidationError
     - CodeInternalError
     - CodeWrongCredentials
+    - CodeTooManyAttempts
   github_com_Sugyk_auth_service_internal_models.LoginRequest:
     properties:
       login:
@@ -78,6 +80,10 @@ paths:
             $ref: '#/definitions/github_com_Sugyk_auth_service_internal_models.AppError'
         "401":
           description: incorrect login or password
+          schema:
+            $ref: '#/definitions/github_com_Sugyk_auth_service_internal_models.AppError'
+        "429":
+          description: too many failed attempts
           schema:
             $ref: '#/definitions/github_com_Sugyk_auth_service_internal_models.AppError'
         "500":

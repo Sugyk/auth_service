@@ -62,6 +62,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/github_com_Sugyk_auth_service_internal_models.AppError"
                         }
                     },
+                    "429": {
+                        "description": "too many failed attempts",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_Sugyk_auth_service_internal_models.AppError"
+                        }
+                    },
                     "500": {
                         "description": "internal error",
                         "schema": {
@@ -142,13 +148,15 @@ const docTemplate = `{
                 "Duplicate login",
                 "Validation error",
                 "Internal error",
-                "Wrong credentials"
+                "Wrong credentials",
+                "Too many attempts"
             ],
             "x-enum-varnames": [
                 "CodeErrDuplicate",
                 "CodeValidationError",
                 "CodeInternalError",
-                "CodeWrongCredentials"
+                "CodeWrongCredentials",
+                "CodeTooManyAttempts"
             ]
         },
         "github_com_Sugyk_auth_service_internal_models.LoginRequest": {
