@@ -29,6 +29,15 @@ services:
     ]
     restart: "no"
 
+  redis:
+    image: redis:7-alpine
+    container_name: auth-service-redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   service:
     build:
       dockerfile: docker/Dockerfile
@@ -41,6 +50,8 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+      redis:
+        condition: service_healthy
     volumes:
       - ./config/config.yaml:/app/config.yaml
       - ./internal/migrations:/app/migrations
