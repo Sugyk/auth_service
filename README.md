@@ -18,6 +18,7 @@ HTTP-сервис аутентификации пользователей на G
 - Управление пулом соединений с PostgreSQL (pgx v5)
 - Автоматические миграции при старте через `migrate`
 - Конфигурация через YAML-файл и переменные окружения
+- Метрики Prometheus для HTTP и gRPC, готовый дашборд Grafana
 
 ---
 
@@ -30,6 +31,8 @@ HTTP-сервис аутентификации пользователей на G
 | Драйвер БД | [pgx/v5](https://github.com/jackc/pgx) |
 | Троттлинг логина | Redis 7 + [go-redis/v9](https://github.com/redis/go-redis) |
 | gRPC | [grpc-go](https://github.com/grpc/grpc-go) + Protocol Buffers |
+| Метрики | [Prometheus](https://github.com/prometheus/client_golang) + [grpc-ecosystem/go-grpc-middleware/providers/prometheus](https://github.com/grpc-ecosystem/go-grpc-middleware) |
+| Визуализация метрик | Grafana |
 | JWT | [golang-jwt/jwt v5](https://github.com/golang-jwt/jwt) |
 | Хеширование | bcrypt (`golang.org/x/crypto`) |
 | Конфигурация | [Viper](https://github.com/spf13/viper) + godotenv |
@@ -77,7 +80,7 @@ cd auth_service
 make run
 ```
 
-Команда соберёт образ, запустит PostgreSQL, применит миграции и поднимет сервис на `localhost:8080`. Порядок запуска контролируется через `healthcheck` и `depends_on` в `compose.yaml`.
+Команда соберёт образ, запустит PostgreSQL, Redis, применит миграции и поднимет сервис на `localhost:8080` (HTTP) и `localhost:50051` (gRPC), а также Prometheus на `localhost:9090` и Grafana на `localhost:3000`. Порядок запуска контролируется через `healthcheck` и `depends_on` в `compose.yaml`.
 
 ### Конфигурация
 
@@ -213,6 +216,22 @@ grpcurl -plaintext -d '{"login":"john","password":"StrongPass12345678!"}' \
 | `CodeWrongCredentials` | `Unauthenticated` |
 | `CodeTooManyAttempts` | `ResourceExhausted` |
 | `CodeInternalError` | `Internal` |
+
+---
+
+## Наблюдаемость
+
+Сервис экспортирует метрики Prometheus для обоих транспортов:
+
+- HTTP — middleware `internal/api/http/middleware/metrics.go` считает `http_requests_total` (по `method`, `path`, `status`) и `http_request_duration_seconds`; эндпоинт `GET /metrics` отдаёт их в текстовом формате Prometheus.
+- gRPC — `grpc-ecosystem/go-grpc-middleware/providers/prometheus` регистрирует перехватчики на unary- и stream-вызовы (`internal/api/grpc/router.go`) и собирает аналогичные метрики по методам сервиса.
+
+`docker compose` поднимает вместе с сервисом:
+
+| Сервис | Адрес | Назначение |
+|---|---|---|
+| Prometheus | `http://localhost:9090` | Скрейпит `service:8080/metrics` каждые 2с (конфиг `docker/prometheus/prometheus.yml`) |
+| Grafana | `http://localhost:3000` | Логин/пароль `admin`/`admin` по умолчанию; datasource и готовый дашборд (`docker/grafana/provisioning/`) подключаются автоматически |
 
 ---
 
