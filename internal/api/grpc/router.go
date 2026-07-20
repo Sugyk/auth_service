@@ -6,6 +6,8 @@ import (
 	"net"
 
 	"github.com/Sugyk/auth_service/internal/api/grpc/pb"
+	grpcprom "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
+	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -23,7 +25,13 @@ func NewRouter(addr string, authServer pb.AuthServiceServer) (*Router, error) {
 		return nil, fmt.Errorf("listen on %s: %w", addr, err)
 	}
 
-	server := grpc.NewServer()
+	srvMetrics := grpcprom.NewServerMetrics(grpcprom.WithServerHandlingTimeHistogram())
+	prometheus.MustRegister(srvMetrics)
+
+	server := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(srvMetrics.UnaryServerInterceptor()),
+		grpc.ChainStreamInterceptor(srvMetrics.StreamServerInterceptor()),
+	)
 
 	pb.RegisterAuthServiceServer(server, authServer)
 
@@ -32,6 +40,8 @@ func NewRouter(addr string, authServer pb.AuthServiceServer) (*Router, error) {
 	healthpb.RegisterHealthServer(server, healthServer)
 
 	reflection.Register(server)
+
+	srvMetrics.InitializeMetrics(server)
 
 	return &Router{
 		server:   server,

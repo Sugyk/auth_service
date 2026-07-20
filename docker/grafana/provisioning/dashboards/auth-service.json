@@ -60,6 +60,67 @@
           "legendFormat": "p99 {{path}}"
         }
       ]
+    },
+    {
+      "id": 4,
+      "title": "gRPC",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 16 }
+    },
+    {
+      "id": 5,
+      "title": "gRPC requests per second",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 17 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (grpc_method, grpc_code) (rate(grpc_server_handled_total{grpc_service=\"auth.v1.AuthService\"}[1m]))",
+          "legendFormat": "{{grpc_method}} {{grpc_code}}"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "gRPC error rate (non-OK)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 17 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "percentunit" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(grpc_server_handled_total{grpc_service=\"auth.v1.AuthService\", grpc_code!=\"OK\"}[5m])) / sum(rate(grpc_server_handled_total{grpc_service=\"auth.v1.AuthService\"}[5m]))",
+          "legendFormat": "error ratio"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "gRPC handling latency (p50 / p95 / p99)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 25 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "s" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le, grpc_method) (rate(grpc_server_handling_seconds_bucket{grpc_service=\"auth.v1.AuthService\"}[5m])))",
+          "legendFormat": "p50 {{grpc_method}}"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, grpc_method) (rate(grpc_server_handling_seconds_bucket{grpc_service=\"auth.v1.AuthService\"}[5m])))",
+          "legendFormat": "p95 {{grpc_method}}"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (le, grpc_method) (rate(grpc_server_handling_seconds_bucket{grpc_service=\"auth.v1.AuthService\"}[5m])))",
+          "legendFormat": "p99 {{grpc_method}}"
+        }
+      ]
     }
   ]
 }
