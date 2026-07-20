@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	_ "github.com/Sugyk/auth_service/docs"
+	"github.com/Sugyk/auth_service/internal/api/http/middleware"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
@@ -24,11 +26,12 @@ func NewRouter(handler Handler) *Router {
 	mux.HandleFunc("POST /api/v1/auth/reg", handler.Register)
 	mux.HandleFunc("POST /api/v1/auth/login", handler.Login)
 	mux.Handle("/swagger/", httpSwagger.WrapHandler)
+	mux.Handle("/metrics", promhttp.Handler())
 	//
 
 	server := &http.Server{
 		Addr:    ":8080",
-		Handler: mux,
+		Handler: middleware.Metrics(mux),
 	}
 
 	return &Router{
