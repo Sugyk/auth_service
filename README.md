@@ -12,6 +12,7 @@ HTTP-сервис аутентификации пользователей на G
 
 - Регистрация пользователя с хешированием пароля (bcrypt, cost = 12)
 - Аутентификация и выдача подписанного JWT-токена
+- Защита `/login` от брутфорса: блокировка логина в Redis после серии неудачных попыток
 - HTTP и gRPC API поверх одной и той же бизнес-логики (транспорты не дублируют её)
 - Настраиваемый TTL токена
 - Управление пулом соединений с PostgreSQL (pgx v5)
@@ -27,6 +28,7 @@ HTTP-сервис аутентификации пользователей на G
 | Язык | Go 1.25 |
 | База данных | PostgreSQL 16 |
 | Драйвер БД | [pgx/v5](https://github.com/jackc/pgx) |
+| Троттлинг логина | Redis 7 + [go-redis/v9](https://github.com/redis/go-redis) |
 | gRPC | [grpc-go](https://github.com/grpc/grpc-go) + Protocol Buffers |
 | JWT | [golang-jwt/jwt v5](https://github.com/golang-jwt/jwt) |
 | Хеширование | bcrypt (`golang.org/x/crypto`) |
@@ -50,7 +52,7 @@ auth_service/
 │   ├── repository/       # работа с БД
 │   ├── migrations/       # SQL-миграции
 │   └── ...
-├── pkg/                  # переиспользуемые пакеты (txmanager, hasher, jwt)
+├── pkg/                  # переиспользуемые пакеты (txmanager, redis, hasher, jwt)
 ├── proto/                # protobuf-контракт gRPC API
 ├── config/               # config.yaml
 ├── tests/                # интеграционные тесты
@@ -96,6 +98,11 @@ cp .env.example .env
 | `JWT_SECRET` | Секретный ключ для подписи токенов | `your-secret-key` |
 | `APP_JWT_TTL` | Время жизни JWT-токена | `24h` |
 | `APP_GRPC_ADDR` | Адрес, на котором слушает gRPC-сервер | `:50051` |
+| `APP_REDIS_ADDR` | Адрес Redis, используемого для троттлинга логина | `localhost:6379` |
+| `APP_REDIS_PASSWORD` | Пароль Redis | (пусто) |
+| `APP_REDIS_DB` | Номер базы Redis | `0` |
+| `APP_THROTTLE_MAX_ATTEMPTS` | Сколько неудачных попыток логина допускается перед блокировкой | `10` |
+| `APP_THROTTLE_BLOCK_DURATION` | На сколько блокируется логин после превышения лимита | `5m` |
 
 > ⚠️ Никогда не коммитьте `.env` с реальными значениями. В production `JWT_SECRET` должен быть не менее 32 символов и храниться в секрет-менеджере (Vault, AWS SSM и т.д.).
 
@@ -151,6 +158,8 @@ make swagger
 
 Токен необходимо передавать в заголовке `Authorization: Bearer <token>` для защищённых эндпоинтов.
 
+После `APP_THROTTLE_MAX_ATTEMPTS` неудачных попыток логина подряд для одного `login` дальнейшие запросы блокируются на `APP_THROTTLE_BLOCK_DURATION` и возвращают `429 Too Many Requests` — независимо от того, верен пароль или нет. Успешный логин сбрасывает счётчик попыток.
+
 ### Ошибки
 
 Ошибки возвращаются в едином формате:
@@ -166,6 +175,7 @@ make swagger
 | `Validation error` | `400 Bad Request` |
 | `Wrong credentials` | `401 Unauthorized` |
 | `Duplicate login` | `409 Conflict` |
+| `Too many attempts` | `429 Too Many Requests` |
 | `Internal error` | `500 Internal Server Error` |
 
 ---
@@ -201,6 +211,7 @@ grpcurl -plaintext -d '{"login":"john","password":"StrongPass12345678!"}' \
 | `CodeValidationError` | `InvalidArgument` |
 | `CodeErrDuplicate` | `AlreadyExists` |
 | `CodeWrongCredentials` | `Unauthenticated` |
+| `CodeTooManyAttempts` | `ResourceExhausted` |
 | `CodeInternalError` | `Internal` |
 
 ---
@@ -220,7 +231,7 @@ make unit
 
 ### Интеграционные тесты
 
-Поднимают реальную PostgreSQL через отдельный `docker compose` и проверяют сквозные сценарии.
+Поднимают реальную PostgreSQL через отдельный `docker compose` и проверяют сквозные сценарии. Redis-троттлинг логина тестируется через [`miniredis`](https://github.com/alicebob/miniredis) (in-process фейк) — отдельного Redis-контейнера для тестов не требуется.
 
 ```bash
 make integration
