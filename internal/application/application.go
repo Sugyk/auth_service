@@ -14,10 +14,12 @@ import (
 	"github.com/Sugyk/auth_service/internal/config"
 	"github.com/Sugyk/auth_service/internal/pkg/hasher"
 	"github.com/Sugyk/auth_service/internal/pkg/jwt_manager"
+	"github.com/Sugyk/auth_service/internal/pkg/ratelimiter"
 	"github.com/Sugyk/auth_service/internal/repository"
 	"github.com/Sugyk/auth_service/internal/service"
 	"github.com/Sugyk/auth_service/pkg/logger"
 	"github.com/Sugyk/auth_service/pkg/postgres"
+	"github.com/Sugyk/auth_service/pkg/redis"
 )
 
 const LOGLEVEL = "info"
@@ -26,6 +28,7 @@ const LOGLEVEL = "info"
 type Application struct {
 	logger logger.Logger
 	db     *postgres.Provider
+	rdb    *redis.Provider
 
 	cfg *config.AppConfig
 
@@ -51,6 +54,10 @@ func (a *Application) Init(ctx context.Context) {
 	// Init DB connection
 	if err := a.InitDB(ctx); err != nil {
 		log.Fatalln("Init application DB error:", err)
+	}
+	// Init Redis connection
+	if err := a.InitRedis(ctx); err != nil {
+		log.Fatalln("Init application Redis error:", err)
 	}
 	// Init Repo layer
 	if err := a.InitRepository(); err != nil {
@@ -114,6 +121,22 @@ func (a *Application) InitDB(ctx context.Context) error {
 	return nil
 }
 
+func (a *Application) InitRedis(ctx context.Context) error {
+	provider := redis.NewProvider(
+		a.logger,
+		a.cfg.RedisCfg.Addr,
+		a.cfg.RedisCfg.Password,
+		a.cfg.RedisCfg.DB,
+	)
+	if err := provider.Open(ctx); err != nil {
+		return err
+	}
+
+	a.rdb = provider
+
+	return nil
+}
+
 func (a *Application) InitRepository() error {
 	a.repository = repository.NewRepository(a.db.DB())
 
@@ -131,11 +154,18 @@ func (a *Application) InitService() error {
 		return err
 	}
 
+	loginThrottler := ratelimiter.New(
+		a.rdb.Client(),
+		a.cfg.ThrottleCfg.MaxAttempts,
+		a.cfg.ThrottleCfg.BlockDuration,
+	)
+
 	a.service = service.NewService(
 		a.repository,
 		txManager,
 		passwordHasher,
 		jwtManager,
+		loginThrottler,
 	)
 
 	return nil
@@ -207,6 +237,9 @@ func (a *Application) Shutdown(ctx context.Context) {
 
 	a.db.Close()
 	a.logger.Info(ctx, "db connection closed")
+
+	a.rdb.Close()
+	a.logger.Info(ctx, "redis connection closed")
 
 	a.logger.Info(ctx, "gracefull shutdown completed without errors")
 }
