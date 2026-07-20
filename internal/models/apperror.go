@@ -12,6 +12,7 @@ const (
 	CodeValidationError  ErrorCode = "Validation error"
 	CodeInternalError    ErrorCode = "Internal error"
 	CodeWrongCredentials ErrorCode = "Wrong credentials"
+	CodeTooManyAttempts  ErrorCode = "Too many attempts"
 )
 
 // Error type that contains ready info about errors for user
@@ -71,6 +72,14 @@ func NewWrongPassword(login string) *AppError {
 		CodeWrongCredentials,
 		"There is incorrect login or password",
 		fmt.Sprintf("incorrect password for login '%s'", login),
+	)
+}
+
+func NewTooManyAttemptsErr(login string) *AppError {
+	return New(
+		CodeTooManyAttempts,
+		"Too many failed attempts, try again later",
+		fmt.Sprintf("login '%s' is throttled after too many failed attempts", login),
 	)
 }
 
