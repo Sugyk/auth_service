@@ -10,3 +10,7 @@ hasher:
 
 jwt:
   ttl: 15m
+
+throttle:
+  maxattempts: 10
+  blockduration: 5m

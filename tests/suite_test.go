@@ -12,12 +12,15 @@ import (
 	"github.com/Sugyk/auth_service/internal/config"
 	"github.com/Sugyk/auth_service/internal/pkg/hasher"
 	"github.com/Sugyk/auth_service/internal/pkg/jwt_manager"
+	"github.com/Sugyk/auth_service/internal/pkg/ratelimiter"
 	"github.com/Sugyk/auth_service/internal/repository"
 	"github.com/Sugyk/auth_service/internal/service"
 	"github.com/Sugyk/auth_service/pkg/logger"
 	"github.com/Sugyk/auth_service/pkg/postgres"
+	"github.com/alicebob/miniredis/v2"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -30,6 +33,8 @@ type IntegrationSuite struct {
 
 	db *pgxpool.Pool
 	tx pgx.Tx
+
+	mr *miniredis.Miniredis
 }
 
 func TestIntegrationSuite(t *testing.T) {
@@ -94,6 +99,17 @@ func (s *IntegrationSuite) SetupSuite() {
 	s.Require().NoError(err)
 
 	s.db = pgProvider.DB()
+
+	mr, err := miniredis.Run()
+	s.Require().NoError(err)
+
+	s.mr = mr
+}
+
+func (s *IntegrationSuite) TearDownSuite() {
+	if s.mr != nil {
+		s.mr.Close()
+	}
 }
 
 func (s *IntegrationSuite) SetupTest() {
@@ -118,11 +134,20 @@ func (s *IntegrationSuite) SetupTest() {
 		s.cfg.HasherCfg.Cost,
 	)
 
+	s.mr.FlushAll()
+	redisClient := redis.NewClient(&redis.Options{Addr: s.mr.Addr()})
+	throttler := ratelimiter.New(
+		redisClient,
+		s.cfg.ThrottleCfg.MaxAttempts,
+		s.cfg.ThrottleCfg.BlockDuration,
+	)
+
 	svc := service.NewService(
 		repo,
 		txManager,
 		passwordHasher,
 		jwtManager,
+		throttler,
 	)
 
 	s.handler = handlers.NewHandler(

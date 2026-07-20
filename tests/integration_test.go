@@ -110,3 +110,46 @@ func (s *IntegrationSuite) TestRegister() {
 		})
 	}
 }
+
+// TestLogin only covers the wrong-credentials path. A happy-path assertion
+// (register then log in with the correct password) can't be exercised here:
+// Register runs inside the suite's fixed, never-committed test transaction
+// (see NewTestTxManager in pkg/postgres/tx.go), but Login's read
+// (GetPasswordByLogin) is not wrapped in a transaction at all, so it always
+// queries the real pool via GetExecutor and never sees the uncommitted row.
+// This is the transaction test double limitation already called out in
+// CLAUDE.md ("multi-transaction rollback scenarios can't be verified through
+// it as-is") — fixing it would mean changing Login's transaction semantics,
+// which is out of scope here.
+func (s *IntegrationSuite) TestLogin() {
+	resp := s.PerformRequest(
+		http.MethodPost,
+		ServicePrefix+"/login",
+		models.LoginRequest{Login: "no_such_user", Password: "wrongpassword12345"},
+		s.handler.Login,
+	)
+	s.Equal(http.StatusUnauthorized, resp.Code, "response body: %s", resp.Body.String())
+}
+
+func (s *IntegrationSuite) TestLogin_BlockedAfterTooManyFailedAttempts() {
+	registerReq := models.RegisterRequest{Login: "throttled_user", Password: "1234567890123456"}
+	regResp := s.PerformRequest(http.MethodPost, ServicePrefix+"/reg", registerReq, s.handler.Register)
+	s.Require().Equal(http.StatusCreated, regResp.Code, "setup: registration must succeed")
+
+	wrongLoginReq := models.LoginRequest{Login: registerReq.Login, Password: "wrongpassword12345"}
+
+	maxAttempts := s.cfg.ThrottleCfg.MaxAttempts
+
+	for i := range maxAttempts {
+		resp := s.PerformRequest(http.MethodPost, ServicePrefix+"/login", wrongLoginReq, s.handler.Login)
+		s.Equal(http.StatusUnauthorized, resp.Code, "attempt %d: response body: %s", i+1, resp.Body.String())
+	}
+
+	blockedResp := s.PerformRequest(http.MethodPost, ServicePrefix+"/login", wrongLoginReq, s.handler.Login)
+	s.Equal(http.StatusTooManyRequests, blockedResp.Code, "response body: %s", blockedResp.Body.String())
+
+	// Even the correct password is rejected while blocked.
+	correctLoginReq := models.LoginRequest(registerReq)
+	stillBlockedResp := s.PerformRequest(http.MethodPost, ServicePrefix+"/login", correctLoginReq, s.handler.Login)
+	s.Equal(http.StatusTooManyRequests, stillBlockedResp.Code, "response body: %s", stillBlockedResp.Body.String())
+}
