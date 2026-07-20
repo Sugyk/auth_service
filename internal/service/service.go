@@ -28,19 +28,27 @@ type PasswordHasher interface {
 	CompareHashAndPassword(password string, passwordHash string) bool
 }
 
+// LoginThrottler protects Login against brute-force password guessing.
+type LoginThrottler interface {
+	CheckAndIncrement(ctx context.Context, login string) (bool, error)
+	Reset(ctx context.Context, login string) error
+}
+
 type Service struct {
 	txManager  TxManager
 	repo       Repository
 	hasher     PasswordHasher
 	jwtManager JWTManager
+	throttler  LoginThrottler
 }
 
-func NewService(repo Repository, txManager TxManager, hasher PasswordHasher, jwtManager JWTManager) *Service {
+func NewService(repo Repository, txManager TxManager, hasher PasswordHasher, jwtManager JWTManager, throttler LoginThrottler) *Service {
 	return &Service{
 		txManager:  txManager,
 		repo:       repo,
 		hasher:     hasher,
 		jwtManager: jwtManager,
+		throttler:  throttler,
 	}
 }
 
@@ -71,6 +79,14 @@ func (s *Service) Register(ctx context.Context, login string, password string) e
 // Login method boilerplate
 func (s *Service) Login(ctx context.Context, login string, password string) (string, error) {
 
+	blocked, err := s.throttler.CheckAndIncrement(ctx, login)
+	if err != nil {
+		return "", models.NewInternalErr(err.Error())
+	}
+	if blocked {
+		return "", models.NewTooManyAttemptsErr(login)
+	}
+
 	passHash, err := s.repo.GetPasswordByLogin(ctx, login)
 
 	if err != nil {
@@ -89,6 +105,10 @@ func (s *Service) Login(ctx context.Context, login string, password string) (str
 	if err != nil {
 		return "", models.NewInternalErr(err.Error())
 	}
+
+	// Best-effort: a failure to reset the throttle state must not fail an
+	// otherwise successful login.
+	_ = s.throttler.Reset(ctx, login)
 
 	return token, nil
 }

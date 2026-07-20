@@ -198,3 +198,56 @@ func (mr *MockPasswordHasherMockRecorder) HashPassword(password any) *gomock.Cal
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HashPassword", reflect.TypeOf((*MockPasswordHasher)(nil).HashPassword), password)
 }
+
+// MockLoginThrottler is a mock of LoginThrottler interface.
+type MockLoginThrottler struct {
+	ctrl     *gomock.Controller
+	recorder *MockLoginThrottlerMockRecorder
+	isgomock struct{}
+}
+
+// MockLoginThrottlerMockRecorder is the mock recorder for MockLoginThrottler.
+type MockLoginThrottlerMockRecorder struct {
+	mock *MockLoginThrottler
+}
+
+// NewMockLoginThrottler creates a new mock instance.
+func NewMockLoginThrottler(ctrl *gomock.Controller) *MockLoginThrottler {
+	mock := &MockLoginThrottler{ctrl: ctrl}
+	mock.recorder = &MockLoginThrottlerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockLoginThrottler) EXPECT() *MockLoginThrottlerMockRecorder {
+	return m.recorder
+}
+
+// CheckAndIncrement mocks base method.
+func (m *MockLoginThrottler) CheckAndIncrement(ctx context.Context, login string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckAndIncrement", ctx, login)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CheckAndIncrement indicates an expected call of CheckAndIncrement.
+func (mr *MockLoginThrottlerMockRecorder) CheckAndIncrement(ctx, login any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckAndIncrement", reflect.TypeOf((*MockLoginThrottler)(nil).CheckAndIncrement), ctx, login)
+}
+
+// Reset mocks base method.
+func (m *MockLoginThrottler) Reset(ctx context.Context, login string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Reset", ctx, login)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Reset indicates an expected call of Reset.
+func (mr *MockLoginThrottlerMockRecorder) Reset(ctx, login any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reset", reflect.TypeOf((*MockLoginThrottler)(nil).Reset), ctx, login)
+}

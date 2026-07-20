@@ -20,7 +20,7 @@ func TestService_Register(t *testing.T) {
 		name      string
 		login     string
 		password  string
-		setupMock func(repo *MockRepository, tx *MockTxManager, hasher *MockPasswordHasher, jwtMgr *MockJWTManager)
+		setupMock func(repo *MockRepository, tx *MockTxManager, hasher *MockPasswordHasher, jwtMgr *MockJWTManager, throttler *MockLoginThrottler)
 		wantErr   error
 		wantErrAs bool
 	}{
@@ -28,7 +28,7 @@ func TestService_Register(t *testing.T) {
 			name:     "success",
 			login:    "john",
 			password: "StrongPass12345678!",
-			setupMock: func(repo *MockRepository, tx *MockTxManager, hasher *MockPasswordHasher, jwtMgr *MockJWTManager) {
+			setupMock: func(repo *MockRepository, tx *MockTxManager, hasher *MockPasswordHasher, jwtMgr *MockJWTManager, throttler *MockLoginThrottler) {
 				hasher.EXPECT().HashPassword("StrongPass12345678!").Return("hashed", nil)
 				tx.EXPECT().WithTx(gomock.Any(), gomock.Any()).DoAndReturn(withTxRunFn(context.Background()))
 				repo.EXPECT().CreateUser(gomock.Any(), "john", "hashed").Return(nil)
@@ -38,7 +38,7 @@ func TestService_Register(t *testing.T) {
 			name:     "hasher error - tx never started",
 			login:    "john",
 			password: "StrongPass12345678!",
-			setupMock: func(repo *MockRepository, tx *MockTxManager, hasher *MockPasswordHasher, jwtMgr *MockJWTManager) {
+			setupMock: func(repo *MockRepository, tx *MockTxManager, hasher *MockPasswordHasher, jwtMgr *MockJWTManager, throttler *MockLoginThrottler) {
 				hasher.EXPECT().HashPassword("StrongPass12345678!").Return("", errors.New("bcrypt exploded"))
 			},
 			wantErr: errors.New("hashing password: bcrypt exploded"),
@@ -47,7 +47,7 @@ func TestService_Register(t *testing.T) {
 			name:     "duplicate login is translated to AppError",
 			login:    "existing",
 			password: "StrongPass12345678!",
-			setupMock: func(repo *MockRepository, tx *MockTxManager, hasher *MockPasswordHasher, jwtMgr *MockJWTManager) {
+			setupMock: func(repo *MockRepository, tx *MockTxManager, hasher *MockPasswordHasher, jwtMgr *MockJWTManager, throttler *MockLoginThrottler) {
 				hasher.EXPECT().HashPassword("StrongPass12345678!").Return("hashed", nil)
 				tx.EXPECT().WithTx(gomock.Any(), gomock.Any()).DoAndReturn(withTxRunFn(context.Background()))
 				repo.EXPECT().CreateUser(gomock.Any(), "existing", "hashed").Return(models.ErrDuplicate)
@@ -59,7 +59,7 @@ func TestService_Register(t *testing.T) {
 			name:     "other repository error is wrapped, not swallowed",
 			login:    "john",
 			password: "StrongPass12345678!",
-			setupMock: func(repo *MockRepository, tx *MockTxManager, hasher *MockPasswordHasher, jwtMgr *MockJWTManager) {
+			setupMock: func(repo *MockRepository, tx *MockTxManager, hasher *MockPasswordHasher, jwtMgr *MockJWTManager, throttler *MockLoginThrottler) {
 				hasher.EXPECT().HashPassword("StrongPass12345678!").Return("hashed", nil)
 				tx.EXPECT().WithTx(gomock.Any(), gomock.Any()).DoAndReturn(withTxRunFn(context.Background()))
 				repo.EXPECT().CreateUser(gomock.Any(), "john", "hashed").Return(errors.New("connection reset"))
@@ -70,7 +70,7 @@ func TestService_Register(t *testing.T) {
 			name:     "tx manager itself fails - repo never reached",
 			login:    "john",
 			password: "StrongPass12345678!",
-			setupMock: func(repo *MockRepository, tx *MockTxManager, hasher *MockPasswordHasher, jwtMgr *MockJWTManager) {
+			setupMock: func(repo *MockRepository, tx *MockTxManager, hasher *MockPasswordHasher, jwtMgr *MockJWTManager, throttler *MockLoginThrottler) {
 				hasher.EXPECT().HashPassword("StrongPass12345678!").Return("hashed", nil)
 				tx.EXPECT().WithTx(gomock.Any(), gomock.Any()).Return(errors.New("begin transaction: connection refused"))
 			},
@@ -86,9 +86,10 @@ func TestService_Register(t *testing.T) {
 			tx := NewMockTxManager(ctrl)
 			hasher := NewMockPasswordHasher(ctrl)
 			jwtMgr := NewMockJWTManager(ctrl)
-			tt.setupMock(repo, tx, hasher, jwtMgr)
+			throttler := NewMockLoginThrottler(ctrl)
+			tt.setupMock(repo, tx, hasher, jwtMgr, throttler)
 
-			svc := NewService(repo, tx, hasher, jwtMgr)
+			svc := NewService(repo, tx, hasher, jwtMgr, throttler)
 
 			err := svc.Register(context.Background(), tt.login, tt.password)
 
@@ -126,7 +127,7 @@ func TestService_Login(t *testing.T) {
 		name      string
 		login     string
 		password  string
-		setupMock func(repo *MockRepository, hasher *MockPasswordHasher, jwtMgr *MockJWTManager)
+		setupMock func(repo *MockRepository, hasher *MockPasswordHasher, jwtMgr *MockJWTManager, throttler *MockLoginThrottler)
 		wantToken string
 		wantErr   error
 		wantErrAs bool
@@ -135,10 +136,12 @@ func TestService_Login(t *testing.T) {
 			name:     "success",
 			login:    "john",
 			password: "StrongPass12345678!",
-			setupMock: func(repo *MockRepository, hasher *MockPasswordHasher, jwtMgr *MockJWTManager) {
+			setupMock: func(repo *MockRepository, hasher *MockPasswordHasher, jwtMgr *MockJWTManager, throttler *MockLoginThrottler) {
+				throttler.EXPECT().CheckAndIncrement(gomock.Any(), "john").Return(false, nil)
 				repo.EXPECT().GetPasswordByLogin(gomock.Any(), "john").Return("hashed", nil)
 				hasher.EXPECT().CompareHashAndPassword("StrongPass12345678!", "hashed").Return(true)
 				jwtMgr.EXPECT().CreateJWT("john").Return("token123", nil)
+				throttler.EXPECT().Reset(gomock.Any(), "john").Return(nil)
 			},
 			wantToken: "token123",
 		},
@@ -146,7 +149,8 @@ func TestService_Login(t *testing.T) {
 			name:     "login not found - generic AppError, not leaked",
 			login:    "ghost",
 			password: "StrongPass12345678!",
-			setupMock: func(repo *MockRepository, hasher *MockPasswordHasher, jwtMgr *MockJWTManager) {
+			setupMock: func(repo *MockRepository, hasher *MockPasswordHasher, jwtMgr *MockJWTManager, throttler *MockLoginThrottler) {
+				throttler.EXPECT().CheckAndIncrement(gomock.Any(), "ghost").Return(false, nil)
 				repo.EXPECT().GetPasswordByLogin(gomock.Any(), "ghost").Return("", models.ErrLoginNotFound)
 			},
 			wantErrAs: true,
@@ -156,7 +160,8 @@ func TestService_Login(t *testing.T) {
 			name:     "other repository error is wrapped",
 			login:    "john",
 			password: "StrongPass12345678!",
-			setupMock: func(repo *MockRepository, hasher *MockPasswordHasher, jwtMgr *MockJWTManager) {
+			setupMock: func(repo *MockRepository, hasher *MockPasswordHasher, jwtMgr *MockJWTManager, throttler *MockLoginThrottler) {
+				throttler.EXPECT().CheckAndIncrement(gomock.Any(), "john").Return(false, nil)
 				repo.EXPECT().GetPasswordByLogin(gomock.Any(), "john").Return("", errors.New("connection reset"))
 			},
 			wantErr: errors.New("get password by login: connection reset"),
@@ -165,7 +170,8 @@ func TestService_Login(t *testing.T) {
 			name:     "wrong password - same generic AppError as not-found",
 			login:    "john",
 			password: "WrongPass12345678!",
-			setupMock: func(repo *MockRepository, hasher *MockPasswordHasher, jwtMgr *MockJWTManager) {
+			setupMock: func(repo *MockRepository, hasher *MockPasswordHasher, jwtMgr *MockJWTManager, throttler *MockLoginThrottler) {
+				throttler.EXPECT().CheckAndIncrement(gomock.Any(), "john").Return(false, nil)
 				repo.EXPECT().GetPasswordByLogin(gomock.Any(), "john").Return("hashed", nil)
 				hasher.EXPECT().CompareHashAndPassword("WrongPass12345678!", "hashed").Return(false)
 			},
@@ -176,13 +182,24 @@ func TestService_Login(t *testing.T) {
 			name:     "jwt signing failure becomes internal AppError",
 			login:    "john",
 			password: "StrongPass12345678!",
-			setupMock: func(repo *MockRepository, hasher *MockPasswordHasher, jwtMgr *MockJWTManager) {
+			setupMock: func(repo *MockRepository, hasher *MockPasswordHasher, jwtMgr *MockJWTManager, throttler *MockLoginThrottler) {
+				throttler.EXPECT().CheckAndIncrement(gomock.Any(), "john").Return(false, nil)
 				repo.EXPECT().GetPasswordByLogin(gomock.Any(), "john").Return("hashed", nil)
 				hasher.EXPECT().CompareHashAndPassword("StrongPass12345678!", "hashed").Return(true)
 				jwtMgr.EXPECT().CreateJWT("john").Return("", errors.New("signing key missing"))
 			},
 			wantErrAs: true,
 			wantErr:   models.NewInternalErr("signing key missing"),
+		},
+		{
+			name:     "blocked login short-circuits before repo is touched",
+			login:    "attacker",
+			password: "StrongPass12345678!",
+			setupMock: func(repo *MockRepository, hasher *MockPasswordHasher, jwtMgr *MockJWTManager, throttler *MockLoginThrottler) {
+				throttler.EXPECT().CheckAndIncrement(gomock.Any(), "attacker").Return(true, nil)
+			},
+			wantErrAs: true,
+			wantErr:   models.NewTooManyAttemptsErr("attacker"),
 		},
 	}
 
@@ -194,9 +211,10 @@ func TestService_Login(t *testing.T) {
 			tx := NewMockTxManager(ctrl)
 			hasher := NewMockPasswordHasher(ctrl)
 			jwtMgr := NewMockJWTManager(ctrl)
-			tt.setupMock(repo, hasher, jwtMgr)
+			throttler := NewMockLoginThrottler(ctrl)
+			tt.setupMock(repo, hasher, jwtMgr, throttler)
 
-			svc := NewService(repo, tx, hasher, jwtMgr)
+			svc := NewService(repo, tx, hasher, jwtMgr, throttler)
 
 			token, err := svc.Login(context.Background(), tt.login, tt.password)
 
