@@ -13,3 +13,12 @@ jwt:
 
 grpc:
   addr: ":50051"
+
+redis:
+  addr: "redis:6379"
+  password: ""
+  db: 0
+
+throttle:
+  maxattempts: 10
+  blockduration: 5m
