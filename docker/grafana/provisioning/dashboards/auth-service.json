@@ -1,0 +1,65 @@
+{
+  "title": "Auth Service",
+  "uid": "auth-service",
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "time": { "from": "now-1h", "to": "now" },
+  "refresh": "10s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Requests per second",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (method, path) (rate(http_requests_total[1m]))",
+          "legendFormat": "{{method}} {{path}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Error rate (5xx)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "percentunit" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m]))",
+          "legendFormat": "error ratio"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Request latency (p50 / p95 / p99)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "s" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le, path) (rate(http_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "p50 {{path}}"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, path) (rate(http_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "p95 {{path}}"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (le, path) (rate(http_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "p99 {{path}}"
+        }
+      ]
+    }
+  ]
+}
