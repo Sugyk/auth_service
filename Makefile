@@ -1,10 +1,10 @@
 .PHONY: run proto swagger unit integration cover
 
 run:
-	docker image prune -f
 	docker compose build
 	docker compose up
 	docker compose down
+	docker image prune -f --filter "label=com.docker.compose.project=auth_service"
 
 proto:
 	protoc \
